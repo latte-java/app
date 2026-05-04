@@ -6,5 +6,6 @@ module org.lattejava.app {
   requires org.lattejava.web;
   exports org.lattejava.app;
   exports org.lattejava.app.model;
+  exports org.lattejava.app.service;
   exports org.lattejava.app.util;
 }

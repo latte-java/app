@@ -64,6 +64,18 @@
             "enabled": true,
             "accessTokenKeyId": "#{asymmetricKeyId}",
             "idTokenKeyId": "#{asymmetricKeyId}"
+          },
+          "registrationConfiguration": {
+            "enabled": true,
+            "type": "basic",
+            "loginIdType": "email",
+            "confirmPassword": false,
+            "birthDate": { "enabled": false, "required": false },
+            "firstName": { "enabled": false, "required": false },
+            "middleName": { "enabled": false, "required": false },
+            "lastName": { "enabled": false, "required": false },
+            "fullName": { "enabled": false, "required": false },
+            "mobilePhone": { "enabled": false, "required": false }
           }
         }
       }

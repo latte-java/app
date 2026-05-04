@@ -5,7 +5,6 @@ package org.lattejava.app.model;
  */
 public record User(
     String email,           // primary identifier — there are no usernames
-    String name,
-    String avatar           // 2-letter initials, e.g. "JD"
+    String name
 ) {
 }
