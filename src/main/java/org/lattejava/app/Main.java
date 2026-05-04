@@ -6,61 +6,36 @@ import module org.lattejava.jwt;
 import module org.lattejava.web;
 
 import org.lattejava.app.model.*;
+import org.lattejava.web.Configuration;
 
 @SuppressWarnings("resource")
 public class Main {
+  public static final Path BASE_DIR = Path.of("web");
   public static final int PORT = 8080;
-  public final Web web = new Web();
-  private final JTETemplates templates = new JTETemplates(Path.of("web"), Path.of("build"));
-  private final OIDC<User> oidc;
+  public final Configuration config;
+  public final OIDC<User> oidc;
+  public final OIDCConfig oidcConfig;
+  public final JTETemplates templates;
+  public final Web web;
 
   public Main() {
-    var config = OIDCConfig.builder()
-                           .issuer("http://localhost:9011")
-                           .clientId("e9fdb985-9173-4e01-9d73-ac2d60d1dc8e")
-                           .clientSecret("super-secret-secret-that-should-be-regenerated-for-production")
-                           .callbackPath("/app/oauth-callback")
+    // Production will override this config file with ENV vars to the Docker container. Setting the config file path
+    // like this makes running and testing in dev much simpler
+    config = new Configuration(
+        Path.of("src/test/resources/config.properties"),
+        List.of("fusionauth.issuer", "fusionauth.clientId", "fusionauth.clientSecret")
+    );
+
+    oidcConfig = OIDCConfig.builder()
+                           .issuer(config.get("fusionauth.issuer"))
+                           .clientId(config.get("fusionauth.clientId"))
+                           .clientSecret(config.get("fusionauth.clientSecret"))
                            .postLoginPage("/app/dashboard")
                            .postLogout("https://lattejava.org")
                            .build();
-    oidc = OIDC.create(config, Main::toUser);
-  }
-
-  public void close() {
-    web.close();
-  }
-
-  public void main() {
-    web.install(SecurityHeaders.builder()
-                               .contentSecurityPolicy("default-src 'self'; "
-                                   + "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
-                                   + "font-src 'self' https://fonts.gstatic.com; "
-                                   + "object-src 'none'; base-uri 'self'; frame-ancestors 'none'; "
-                                   + "form-action 'self'")
-                               .build())
-       .install(oidc)
-       .baseDir(Path.of("web"))
-       .files("/static")
-       .get("/", this::redirect)
-       .prefix("/app", r -> {
-         r.install(oidc.authenticated());
-         r.get("/dashboard", this::dashboard);
-       })
-       .start(PORT);
-  }
-
-  private static User toUser(JWT jwt) {
-    String email = jwt.getString("email");
-    String name = jwt.getString("name");
-    if (name == null || name.isBlank()) {
-      String first = jwt.getString("given_name");
-      String last = jwt.getString("family_name");
-      name = ((first == null ? "" : first) + " " + (last == null ? "" : last)).trim();
-    }
-    if (name.isBlank() && email != null) {
-      name = email;
-    }
-    return new User(email, name, initials(name, email));
+    oidc = OIDC.create(oidcConfig, Main::toUser);
+    templates = new JTETemplates(BASE_DIR, Path.of("build"));
+    web = new Web();
   }
 
   private static String initials(String name, String email) {
@@ -77,8 +52,41 @@ public class Main {
     return "??";
   }
 
-  private void redirect(HTTPRequest req, HTTPResponse res) {
-    res.sendRedirect("/app/dashboard", 301);
+  private static User toUser(JWT jwt) {
+    String email = jwt.getString("email");
+    String name = jwt.getString("name");
+    if (name == null || name.isBlank()) {
+      String first = jwt.getString("given_name");
+      String last = jwt.getString("family_name");
+      name = ((first == null ? "" : first) + " " + (last == null ? "" : last)).trim();
+    }
+    if (name.isBlank() && email != null) {
+      name = email;
+    }
+    return new User(email, name, initials(name, email));
+  }
+
+  public void close() {
+    web.close();
+  }
+
+  public void main() {
+    web.install(SecurityHeaders.builder()
+                               .contentSecurityPolicy("default-src 'self'; "
+                                   + "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
+                                   + "font-src 'self' https://fonts.gstatic.com; "
+                                   + "object-src 'none'; base-uri 'self'; frame-ancestors 'none'; "
+                                   + "form-action 'self'")
+                               .build())
+       .install(oidc)
+       .baseDir(BASE_DIR)
+       .files("/static")
+       .get("/", this::redirect)
+       .prefix("/app", r -> {
+         r.install(oidc.authenticated());
+         r.get("/dashboard", this::dashboard);
+       })
+       .start(PORT);
   }
 
   private void dashboard(HTTPRequest req, HTTPResponse res) throws IOException {
@@ -142,5 +150,9 @@ public class Main {
     params.put("groups", groups);
     params.put("recentActivity", activity);
     templates.html("pages/dashboard.jte", req, res, params);
+  }
+
+  private void redirect(HTTPRequest req, HTTPResponse res) {
+    res.sendRedirect("/app/dashboard", 301);
   }
 }

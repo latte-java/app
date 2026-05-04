@@ -49,7 +49,7 @@
           "name": "Latte App",
           "oauthConfiguration": {
             "authorizedRedirectURLs": [
-              "http://localhost:8080/app/oauth-callback"
+              "http://localhost:8080/oidc/return"
             ],
             "logoutURL": "http://localhost:8080/",
             "clientSecret": "#{clientSecret}",
