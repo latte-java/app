@@ -1,11 +1,16 @@
-package org.lattejava.app.model;
+/*
+ * Copyright (c) 2026 The Latte Project
+ * SPDX-License-Identifier: MIT
+ */
+package org.lattejava.app.model.view;
 
-import java.util.*;
+import module java.base;
+import module org.lattejava.app;
 
 /**
  * Bound on every page, holds chrome state.
  */
-public record View(
+public record MainView(
     User viewer,
     List<Group> groupsForSidebar,
     String activeNav,      // "dashboard" | "groups" | "artifacts" | "settings" | ...

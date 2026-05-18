@@ -1,27 +1,26 @@
+/*
+ * Copyright (c) 2026 The Latte Project
+ * SPDX-License-Identifier: MIT
+ */
 package org.lattejava.app.model;
 
-import java.time.*;
-import java.util.*;
+import module java.base;
 
 /**
- * A repository group ("io.nimbusworks", "dev.jdoe", etc).
+ * A repository group. The {@code name} is the identity (no synthetic UUID).
  */
 public record Group(
-    String id,                       // url slug, e.g. "io-nimbusworks"
-    String name,                     // reverse-dns name, e.g. "io.nimbusworks"
-    String domain,                   // forward dns, e.g. "nimbusworks.io" — null for handle groups
-    VerificationStatus verification,
-    Role viewerRole,                 // role the current viewer holds in this group
+    String name,
     String description,
-    boolean handleGroup,             // true for "dev.<handle>" personal groups
-    int artifactCount,
-    int memberCount,
-    long monthlyDownloads,
-    LocalDate createdOn,
-    LocalDate verifiedOn,            // null when not verified
-    String pendingSince,             // free-text e.g. "Apr 26, 2026"
-    List<Artifact> artifacts,
-    List<Member> members,
-    List<ActivityEntry> activity
+    GroupState state,
+    String verificationCode,
+    Instant createdAt,
+    Instant verifiedAt
 ) {
+  public Group {
+    name = name != null ? name.trim().toLowerCase(Locale.ROOT) : null;
+    description = description != null ? description.trim() : "";
+    state = state != null ? state : GroupState.PENDING;
+    createdAt = createdAt != null ? createdAt : Instant.EPOCH;
+  }
 }

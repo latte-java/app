@@ -1,0 +1,10 @@
+name = "latte-app"
+compatibility_date = "2026-05-01"
+
+# Each developer overrides database_id via wrangler CLI flags or by editing
+# this file locally. The committed value is a placeholder; CI/prod uses its own.
+[[d1_databases]]
+binding = "DB"
+database_name = "latte-app-dev"
+database_id = "9e8d6d3f-b6c8-4357-b9da-eb387c05faa5"
+migrations_dir = "migrations"

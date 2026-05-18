@@ -1,10 +1,12 @@
+/*
+ * Copyright (c) 2026 The Latte Project
+ * SPDX-License-Identifier: MIT
+ */
 package org.lattejava.app.model;
 
 public enum Role {
-  OWNER("Owner", "Full control. Can delete the group."),
-  ADMIN("Admin", "Manage members and settings."),
-  PUBLISHER("Publisher", "Publish and yank artifact versions."),
-  VIEWER("Viewer", "Read-only access to private artifacts.");
+  CONTRIBUTOR("Contributor", "Publish artifacts."),
+  OWNER("Owner", "Manage members and publish artifacts.");
 
   private final String description;
   private final String label;

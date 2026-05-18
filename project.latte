@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) 2026 The Latte Project
+ * SPDX-License-Identifier: MIT
+ */
 project(group: "org.lattejava", name: "app", version: "0.1.0", licenses: ["MIT"]) {
   workflow {
     standard()
@@ -5,8 +9,15 @@ project(group: "org.lattejava", name: "app", version: "0.1.0", licenses: ["MIT"]
 
   dependencies {
     group(name: "compile") {
+      dependency(id: "com.fasterxml.jackson.core:jackson-annotations:2.21")
+      dependency(id: "com.fasterxml.jackson.core:jackson-core:2.21.1")
+      dependency(id: "com.fasterxml.jackson.core:jackson-databind:2.21.1")
       dependency(id: "gg.jte:jte:3.2.1")
       dependency(id: "gg.jte:jte-runtime:3.2.1")
+      dependency(id: "io.fusionauth:fusionauth-java-client:1.65.0") {
+        exclusion(id: "io.fusionauth:fusionauth-jwt")
+      }
+      dependency(id: "com.inversoft:restify:4.4.0")
       dependency(id: "org.lattejava:http:0.1.4")
       dependency(id: "org.lattejava:jwt:0.1.0")
       dependency(id: "org.lattejava:web:0.2.0-{integration}")

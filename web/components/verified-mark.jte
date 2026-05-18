@@ -1,16 +1,13 @@
 <%--
-    Verified mark — small icon next to a group name.
+    Verification status pill: Verified (green), Pending (amber), Failed (red).
 --%>
-@import org.lattejava.app.model.VerificationStatus
-@param VerificationStatus status
-@param int size = 14
+@import org.lattejava.app.model.GroupState
+@param GroupState status
 
-@if(status == VerificationStatus.VERIFIED)
-  <span class="inline-flex items-center text-sky-500" title="Verified">
-        @template.components.icon(name = "check-circle", size = size)
-    </span>
-@elseif(status == VerificationStatus.PENDING)
-  <span class="inline-flex items-center text-amber-500" title="Verification pending">
-        @template.components.icon(name = "clock", size = size)
-    </span>
+@if(status == GroupState.VERIFIED)
+  @template.components.badge(label = "Verified", tone = "success")
+@elseif(status == GroupState.PENDING)
+  @template.components.badge(label = "Pending", tone = "warn")
+@elseif(status == GroupState.FAILED)
+  @template.components.badge(label = "Failed", tone = "danger")
 @endif

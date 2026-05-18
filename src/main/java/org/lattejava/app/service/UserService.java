@@ -1,16 +1,26 @@
+/*
+ * Copyright (c) 2026 The Latte Project
+ * SPDX-License-Identifier: MIT
+ */
 package org.lattejava.app.service;
 
-import org.lattejava.app.model.*;
-import org.lattejava.jwt.*;
+import module java.base;
+import module org.lattejava.app;
+import module org.lattejava.jwt;
 
 public class UserService {
   /**
-   * Convert a JWT to a User.
+   * Convert a JWT to a User. The `sub` claim carries the FusionAuth user UUID.
    *
    * @param jwt The JWT to convert.
    * @return The User.
    */
   public static User toUser(JWT jwt) {
+    String sub = jwt.getString("sub");
+    if (sub == null) {
+      throw new IllegalStateException("JWT missing required [sub] claim");
+    }
+    UUID userId = UUID.fromString(sub);
     String email = jwt.getString("email");
     String name = jwt.getString("name");
     if (name == null || name.isBlank()) {
@@ -23,6 +33,6 @@ public class UserService {
       name = email;
     }
 
-    return new User(email, name);
+    return new User(userId, email, name);
   }
 }

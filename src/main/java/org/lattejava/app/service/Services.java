@@ -1,0 +1,43 @@
+package org.lattejava.app.service;
+
+import org.lattejava.web.*;
+
+/**
+ * A simple service registry.
+ */
+public class Services {
+  private static GroupService groupService;
+  private static MembershipService membershipService;
+  private static VerificationService verificationService;
+  private static ViewService viewService;
+
+  public static GroupService groupService() {
+    return groupService;
+  }
+
+  public static void initialize(Configuration config) {
+    groupService = new GroupService(config);
+    membershipService = new MembershipService(config);
+    verificationService = new VerificationService(config);
+    viewService = new ViewService(config);
+
+    // Kick off the verification scheduled task
+    verificationService.start();
+  }
+
+  public static MembershipService membershipService() {
+    return membershipService;
+  }
+
+  public static void shutdown() {
+    verificationService.shutdown();
+  }
+
+  public static VerificationService verificationService() {
+    return verificationService;
+  }
+
+  public static ViewService viewService() {
+    return viewService;
+  }
+}

@@ -25,7 +25,7 @@
 <nav class="tabs" aria-label="Section">
   @for(Tab t : tabs)
     !{boolean active = t.id().equals(activeId);}
-    <a class="tabs__tab @if(active)tabs__tab--active@endif" href="${t.href()}">
+    <a class="tabs__tab ${active ? "tabs__tab--active" : ""}" href="${t.href()}">
       <span>${t.label()}</span>
       @if(t.count() != null)
         <span class="tabs__count">${t.count()}</span>

@@ -1,4 +1,5 @@
 {
+  "licenseId": "#{ENV.FUSIONAUTH_APP_LICENSE_KEY}",
   "variables": {
     "apiKey": "33052c8a-c283-4e96-9d2a-eb1215c69f8f-not-for-prod",
     "asymmetricKeyId": "#{UUID()}",
@@ -7,10 +8,17 @@
     "defaultTenantId": "d7d09513-a3f5-401c-9685-34ab6c552453",
     "adminEmail": "admin@lattejava.org",
     "adminPassword": "password",
-    "adminUserId": "00000000-0000-0000-0000-000000000001",
-    "userEmail": "test@lattejava.org",
-    "userPassword": "password",
-    "userUserId": "00000000-0000-0000-0000-111111111111"
+    "adminUserId": "#{UUID()}",
+    "ordinaryEmail": "test@lattejava.org",
+    "ordinaryPassword": "password",
+    "ordinaryUserId": "#{UUID()}",
+    "githubIdpId": "bef65e1f-0ecf-4c7a-93cb-f58c3ce10b72",
+    "inviteEmailTemplateId": "a4db4962-efd8-476d-af15-932567f337b8",
+    "setPasswordEmailTemplateId": "9ada7df9-914e-4bd6-9e24-6c11abb1ed3f",
+    "emailFieldId":    "#{UUID()}",
+    "passwordFieldId": "#{UUID()}",
+    "usernameFieldId": "#{UUID()}",
+    "registrationFormId": "#{UUID()}"
   },
   "apiKeys": [
     {
@@ -19,15 +27,6 @@
     }
   ],
   "requests": [
-    {
-      "method": "PATCH",
-      "url": "/api/tenant/#{defaultTenantId}",
-      "body": {
-        "tenant": {
-          "issuer": "http://localhost:9011"
-        }
-      }
-    },
     {
       "method": "POST",
       "url": "/api/key/generate/#{asymmetricKeyId}",
@@ -42,6 +41,104 @@
     },
     {
       "method": "POST",
+      "url": "/api/email/template/#{inviteEmailTemplateId}",
+      "body": {
+        "emailTemplate": {
+          "name": "[Latte] Group Invitation",
+          "fromEmail": "noreply@lattejava.org",
+          "defaultFromName": "Latte Java",
+          "defaultSubject": "You've been invited to ${groupName!'a Latte Java group'}",
+          "defaultHtmlTemplate": "<p>Hi ${user.firstName!''},</p><p>You've been invited to join the group <strong>${groupName!''}</strong> on Latte Java.</p><p><a href=\"http://localhost:8080/\">Sign in</a> to accept the invitation.</p>",
+          "defaultTextTemplate": "Hi ${user.firstName!''},\n\nYou've been invited to join the group ${groupName!''} on Latte Java.\n\nSign in at http://localhost:8080/ to accept."
+        }
+      }
+    },
+    {
+      "method": "POST",
+      "url": "/api/email/template/#{setPasswordEmailTemplateId}",
+      "body": {
+        "emailTemplate": {
+          "name": "[Latte] Set Password (Invitation)",
+          "fromEmail": "noreply@lattejava.org",
+          "defaultFromName": "Latte Java",
+          "defaultSubject": "Set your Latte Java password",
+          "defaultHtmlTemplate": "<p>Hi ${user.firstName!''},</p><p>You've been invited to join Latte Java. Click the link below to set a password and finish creating your account.</p><p><a href=\"${tenant.issuer}/password/change/${changePasswordId}?tenantId=${user.tenantId}&client_id=e9fdb985-9173-4e01-9d73-ac2d60d1dc8e&redirect_uri=${'http://localhost:8080/oidc/return'?url}&response_type=code\">Set my password</a></p>",
+          "defaultTextTemplate": "Hi ${user.firstName!''},\n\nYou've been invited to join Latte Java. Visit the link below to set a password and finish creating your account.\n\n${tenant.issuer}/password/change/${changePasswordId}?tenantId=${user.tenantId}&client_id=e9fdb985-9173-4e01-9d73-ac2d60d1dc8e&redirect_uri=${'http://localhost:8080/oidc/return'?url}&response_type=code"
+        }
+      }
+    },
+    {
+      "method": "PATCH",
+      "url": "/api/tenant/#{defaultTenantId}",
+      "body": {
+        "tenant": {
+          "issuer": "http://localhost:9011",
+          "emailConfiguration": {
+            "host": "mailcatcher",
+            "port": 1025,
+            "defaultFromEmail": "noreply@lattejava.org",
+            "defaultFromName": "Latte Java",
+            "implicitEmailVerificationAllowed": true,
+            "setPasswordEmailTemplateId": "#{setPasswordEmailTemplateId}"
+          }
+        }
+      }
+    },
+    {
+      "method": "POST",
+      "url": "/api/form/field/#{emailFieldId}",
+      "body": {
+        "field": {
+          "key": "user.email",
+          "name": "[Latte Registration] Email",
+          "required": true
+        }
+      }
+    },
+    {
+      "method": "POST",
+      "url": "/api/form/field/#{usernameFieldId}",
+      "body": {
+        "field": {
+          "key": "user.username",
+          "name": "[Latte Registration] Username",
+          "required": true
+        }
+      }
+    },
+    {
+      "method": "POST",
+      "url": "/api/form/field/#{passwordFieldId}",
+      "body": {
+        "field": {
+          "key": "user.password",
+          "name": "[Latte Registration] Password",
+          "required": true
+        }
+      }
+    },
+    {
+      "method": "POST",
+      "url": "/api/form/#{registrationFormId}",
+      "body": {
+        "form": {
+          "name": "Default Registration",
+          "type": "registration",
+          "steps": [
+            {
+              "type": "collectData",
+              "fields": [
+                "#{emailFieldId}",
+                "#{usernameFieldId}",
+                "#{passwordFieldId}"
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "method": "POST",
       "url": "/api/application/#{applicationId}",
       "tenantId": "#{defaultTenantId}",
       "body": {
@@ -49,9 +146,10 @@
           "name": "Latte App",
           "oauthConfiguration": {
             "authorizedRedirectURLs": [
+              "http://localhost:8080/oidc/logout-return",
               "http://localhost:8080/oidc/return"
             ],
-            "logoutURL": "http://localhost:8080/",
+            "logoutURL": "http://localhost:8080/oidc/logout-return",
             "clientSecret": "#{clientSecret}",
             "enabledGrants": [
               "authorization_code",
@@ -67,15 +165,39 @@
           },
           "registrationConfiguration": {
             "enabled": true,
-            "type": "basic",
-            "loginIdType": "email",
-            "confirmPassword": false,
-            "birthDate": { "enabled": false, "required": false },
-            "firstName": { "enabled": false, "required": false },
-            "middleName": { "enabled": false, "required": false },
-            "lastName": { "enabled": false, "required": false },
-            "fullName": { "enabled": false, "required": false },
-            "mobilePhone": { "enabled": false, "required": false }
+            "type": "advanced",
+            "formId": "#{registrationFormId}"
+          }
+        }
+      }
+    },
+    {
+      "method": "POST",
+      "url": "/api/identity-provider/#{githubIdpId}",
+      "body": {
+        "identityProvider": {
+          "type": "OpenIDConnect",
+          "name": "GitHub",
+          "enabled": true,
+          "buttonText": "Sign in with GitHub",
+          "linkingStrategy": "LinkByEmail",
+          "oauth2": {
+            "authorization_endpoint": "https://github.com/login/oauth/authorize",
+            "token_endpoint": "https://github.com/login/oauth/access_token",
+            "userinfo_endpoint": "https://api.github.com/user",
+            "clientAuthenticationMethod": "client_secret_basic",
+            "client_id": "#{ENV.FUSIONAUTH_APP_GITHUB_CLIENT_ID}",
+            "client_secret": "#{ENV.FUSIONAUTH_APP_GITHUB_CLIENT_SECRET}",
+            "scope": "read:user user:email read:org",
+            "uniqueIdClaim": "id",
+            "emailClaim": "email",
+            "usernameClaim": "login"
+          },
+          "applicationConfiguration": {
+            "#{applicationId}": {
+              "enabled": true,
+              "createRegistration": true
+            }
           }
         }
       }
@@ -93,25 +215,23 @@
         "skipRegistrationVerification": true,
         "user": {
           "email": "#{adminEmail}",
-          "firstName": "Admin",
-          "lastName": "User",
+          "username": "AdminUser",
           "password": "#{adminPassword}"
         }
       }
     },
     {
       "method": "POST",
-      "url": "/api/user/registration/#{userUserId}",
+      "url": "/api/user/registration/#{ordinaryUserId}",
       "body": {
         "registration": {
           "applicationId": "#{applicationId}"
         },
         "skipRegistrationVerification": true,
         "user": {
-          "email": "#{userEmail}",
-          "firstName": "Test",
-          "lastName": "User",
-          "password": "#{userPassword}"
+          "email": "#{ordinaryEmail}",
+          "username": "OrdinaryUser",
+          "password": "#{ordinaryPassword}"
         }
       }
     }

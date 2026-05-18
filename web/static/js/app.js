@@ -4,17 +4,17 @@
 (function () {
     // Copy buttons inside <code-block>
     document.addEventListener('click', function (e) {
-        const btn = e.target.closest('.codeblock__copy');
+        const btn = e.target.closest('button[data-copy]');
         if (!btn) return;
         const text = btn.getAttribute('data-copy') || '';
         navigator.clipboard?.writeText(text);
-        const span = btn.querySelector('span');
-        if (span) {
-            const old = span.textContent;
-            span.textContent = 'copied';
-            btn.style.color = 'var(--brand-cup)';
+        const label = btn.querySelector('span:last-of-type');
+        if (label) {
+            const old = label.textContent;
+            label.textContent = 'Copied';
+            btn.style.color = 'var(--color-sky-400)';
             setTimeout(() => {
-                span.textContent = old;
+                label.textContent = old;
                 btn.style.color = '';
             }, 1200);
         }

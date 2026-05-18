@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) 2026 The Latte Project
+ * SPDX-License-Identifier: MIT
+ */
 package org.lattejava.app.util;
 
 /** Tiny formatting helpers used inside JTE templates. */
