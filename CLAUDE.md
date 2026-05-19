@@ -11,6 +11,10 @@ Latte Java's repository-management web app — the UI users sign in to in order 
 - `docs/design/` — all design documents and specs (filenames prefixed with `YYYY-MM-DD-` creation date)
 - `docs/implementation/` — all implementation plans (filenames prefixed with `YYYY-MM-DD-` creation date)
 
+## Worktree
+
+Worktrees should be created in the `.worktrees` directory in the root of the project (see `.gitignore`).
+
 ## Build & run
 
 This project is built with `latte` (the Latte build tool, project file is `project.latte`), not Maven/Gradle. Java 25 is required (`.javaversion`).
