@@ -4,6 +4,7 @@
  */
 module org.lattejava.app.tests {
   requires fusionauth.java.client;
+  requires java.net.http;
   requires org.lattejava.app;
   requires org.lattejava.web;
   requires org.testng;

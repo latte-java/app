@@ -15,6 +15,7 @@
     "githubIdpId": "bef65e1f-0ecf-4c7a-93cb-f58c3ce10b72",
     "inviteEmailTemplateId": "a4db4962-efd8-476d-af15-932567f337b8",
     "setPasswordEmailTemplateId": "9ada7df9-914e-4bd6-9e24-6c11abb1ed3f",
+    "themeId": "c1d7e3a4-6b2f-4e8a-9f1c-5a0d8b3e2f10",
     "emailFieldId":    "#{UUID()}",
     "passwordFieldId": "#{UUID()}",
     "usernameFieldId": "#{UUID()}",
@@ -68,11 +69,57 @@
       }
     },
     {
+      "method": "POST",
+      "url": "/api/theme/#{themeId}",
+      "body": {
+        "theme": {
+          "name": "Latte Java",
+          "type": "simple",
+          "variables": {
+            "pageBackgroundColor": "#f8fafc",
+            "panelBackgroundColor": "#ffffff",
+            "fontColor": "#0f172a",
+            "primaryButtonColor": "#0284c7",
+            "primaryButtonFocusColor": "#0369a1",
+            "primaryButtonTextColor": "#ffffff",
+            "primaryButtonTextFocusColor": "#ffffff",
+            "linkTextColor": "#0284c7",
+            "linkTextFocusColor": "#0369a1",
+            "deleteButtonColor": "#dc2626",
+            "deleteButtonFocusColor": "#b91c1c",
+            "deleteButtonTextColor": "#ffffff",
+            "deleteButtonTextFocusColor": "#ffffff",
+            "inputBackgroundColor": "#ffffff",
+            "inputTextColor": "#0f172a",
+            "inputIconColor": "#94a3b8",
+            "iconColor": "#475569",
+            "iconBackgroundColor": "#f1f5f9",
+            "alertBackgroundColor": "#e0f2fe",
+            "alertFontColor": "#0c4a6e",
+            "errorFontColor": "#b91c1c",
+            "errorIconColor": "#dc2626",
+            "infoIconColor": "#0284c7",
+            "monoFontColor": "#0f172a",
+            "borderRadius": "8px",
+            "fontFamily": "Inter, ui-sans-serif, system-ui, sans-serif",
+            "monoFontFamily": "JetBrains Mono, ui-monospace, monospace",
+            "logoImageURL": "http://localhost:8080/static/images/logo.svg",
+            "logoImageSize": "200px",
+            "favicons": [
+              { "href": "http://localhost:8080/static/favicon-32x32.png", "rel": "icon", "type": "image/png" },
+              { "href": "http://localhost:8080/static/favicon-16x16.png", "rel": "icon", "type": "image/png" }
+            ]
+          }
+        }
+      }
+    },
+    {
       "method": "PATCH",
       "url": "/api/tenant/#{defaultTenantId}",
       "body": {
         "tenant": {
           "issuer": "http://localhost:9011",
+          "themeId": "#{themeId}",
           "emailConfiguration": {
             "host": "mailcatcher",
             "port": 1025,

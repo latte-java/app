@@ -59,10 +59,20 @@ public class Main {
     Services.initialize(config);
 
     web.addShutdownTask(Services::shutdown)
-       .install(SecurityHeaders.builder()
-                               .contentSecurityPolicy(CSP_HEADER)
-                               .build())
+       .install(SecurityHeaders.defaults()
+                               .contentSecurityPolicy(CSP_HEADER))
        .install(oidc)
+       // The FusionAuth hosted login page (a different origin, :9011) embeds the themed Latte logo and favicons
+       // from /static. SecurityHeaders sets Cross-Origin-Resource-Policy: same-origin globally, which a browser
+       // honors by refusing to deliver those assets cross-origin. Relax CORP to cross-origin for /static only —
+       // public branding assets are meant to be embeddable — leaving every other response same-origin. This runs
+       // before the static file handler and overrides the value SecurityHeaders set earlier in the chain.
+       .install((request, response, chain) -> {
+         if (request.getPath().startsWith("/static/")) {
+           response.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
+         }
+         chain.next(request, response);
+       })
        .baseDir(BASE_DIR)
        .files("/static")
        .get("/", this::slash)
