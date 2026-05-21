@@ -1,16 +1,17 @@
 @import org.lattejava.app.model.Group
 @import org.lattejava.app.model.GroupState
-@import org.lattejava.app.model.view.MainView
+@import org.lattejava.app.model.view.GroupView
 @import org.lattejava.app.model.view.VerificationView
 @import org.lattejava.app.service.GroupKind
 @import org.lattejava.app.service.validation.GroupValidator
-@param MainView view
-@param Group group
+@param GroupView groupView
 @param VerificationView verification
 @param String status
 @param boolean githubLinked
 
-@template.layout.main(view = view, pageTitle = "Verify " + group.name(), activeNav = "groups", activeGroupId = group.name(), content = @`
+!{Group group = groupView.group();}
+
+@template.layout.main(view=groupView.mainView(), pageTitle="Verify " + group.name(), activeNav="groups", activeGroupId=group.name(), content=@`
   <nav class="flex items-center gap-1.5 mb-3.5 text-sm font-medium text-slate-500">
     <a class="hover:text-slate-900 dark:hover:text-slate-100 no-underline" href="/app/groups/">Groups</a>
     @template.components.icon(name = "chevron-right", size = 11)

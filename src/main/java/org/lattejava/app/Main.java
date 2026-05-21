@@ -15,40 +15,41 @@ import org.lattejava.web.Configuration;
 @SuppressWarnings("resource")
 public class Main {
   public static final Path BASE_DIR = Path.of("web");
-  public static final String CSP_HEADER = CSP.defaults()
-                                             .addImgSrc("https://gravatar.com")
-                                             .build();
-  public static final int PORT = 8080;
   public static final List<String> REQUIRED_CONFIG = List.of("d1.accountId", "d1.apiToken", "d1.baseUrl", "d1.databaseId",
       "fusionauth.apiKey", "fusionauth.baseUrl", "fusionauth.clientId", "fusionauth.clientSecret", "fusionauth.issuer",
-      "fusionauth.licenseKey", "github.clientId", "github.clientSecret", "r2.accessKeyId", "r2.accountId",
-      "r2.bucket", "r2.secretAccessKey", "web.cookieEncryptionKey");
+      "github.clientId", "github.clientSecret", "r2.accessKeyId", "r2.accountId", "r2.bucket", "r2.secretAccessKey",
+      "web.cookieEncryptionKey");
   public final Configuration config;
   public final Cookies cookies;
   public final OIDC<User> oidc;
   public final OIDCConfig oidcConfig;
+  public final int port;
   public final JTETemplates templates;
   public final Web web;
 
   public Main() {
-    config = new Configuration(
+    this(8080);
+  }
+
+  public Main(int port) {
+    this.config = new Configuration(
         REQUIRED_CONFIG,
         Path.of(System.getProperty("user.home"), ".config", "latte", "app", "config.properties"),
         Path.of("src/test/resources/config.properties")
     );
 
-    oidcConfig = OIDCConfig.builder()
-                           .issuer(config.get("fusionauth.issuer"))
-                           .clientId(config.get("fusionauth.clientId"))
-                           .clientSecret(config.get("fusionauth.clientSecret"))
-                           .postLoginPage("/app/")
-                           .postLogout("https://lattejava.org")
-                           .build();
-    oidc = OIDC.create(oidcConfig, UserService::toUser);
-    cookies = Cookies.encryptionKeys(Base64.getDecoder().decode(config.get("web.cookieEncryptionKey")));
-    templates = new JTETemplates(BASE_DIR, Path.of("build"));
-
-    web = new Web();
+    this.oidcConfig = OIDCConfig.builder()
+                                .issuer(config.get("fusionauth.issuer"))
+                                .clientId(config.get("fusionauth.clientId"))
+                                .clientSecret(config.get("fusionauth.clientSecret"))
+                                .postLoginPage("/app/")
+                                .postLogout("https://lattejava.org")
+                                .build();
+    this.oidc = OIDC.create(oidcConfig, UserService::toUser);
+    this.cookies = Cookies.encryptionKeys(Base64.getDecoder().decode(config.get("web.cookieEncryptionKey")));
+    this.templates = new JTETemplates(BASE_DIR, Path.of("build"));
+    this.port = port;
+    this.web = new Web();
   }
 
   public void close() {
@@ -59,61 +60,78 @@ public class Main {
     Services.initialize(config);
 
     web.addShutdownTask(Services::shutdown)
-       .install(SecurityHeaders.defaults()
-                               .contentSecurityPolicy(CSP_HEADER))
-       .install(oidc)
-       // The FusionAuth hosted login page (a different origin, :9011) embeds the themed Latte logo and favicons
-       // from /static. SecurityHeaders sets Cross-Origin-Resource-Policy: same-origin globally, which a browser
-       // honors by refusing to deliver those assets cross-origin. Relax CORP to cross-origin for /static only —
-       // public branding assets are meant to be embeddable — leaving every other response same-origin. This runs
-       // before the static file handler and overrides the value SecurityHeaders set earlier in the chain.
-       .install((request, response, chain) -> {
-         if (request.getPath().startsWith("/static/")) {
-           response.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
-         }
-         chain.next(request, response);
-       })
        .baseDir(BASE_DIR)
+
+       // Catch unhandled exceptions and render the fun error page. Installed first so it wraps every other middleware
+       // and route handler.
+       .install(new AppExceptionHandler(templates))
+
+       // Allow the static resources (images, js, etc) to be used across origin (e.g., on the login page)
+       .install(new FilteredMiddleware("/static", SecurityHeaders.empty().crossOriginResourcePolicy("cross-origin")))
        .files("/static")
+
+       // Standard security but with our custom CSP URLs
+       .install(SecurityHeaders.defaults().contentSecurityPolicy(CSP.defaults()
+                                                                    .addImgSrc("https://gravatar.com")
+                                                                    .build()))
+       .install(oidc)
        .get("/", this::slash)
-       .prefix("/app", app -> {
-         app.install(oidc.authenticated())
-            .get("/", this::dashboard)
-            .prefix("/oauth/github", gh -> {
-              GitHubController gitHubController = new GitHubController(cookies, oidc);
-              gh.get("/connect", gitHubController::startConnection)
-                .get("/callback", gitHubController::githubCallback);
+       .prefix("/app", app ->
+           app.install(oidc.authenticated())
+              .get("/", this::dashboard)
+              .prefix("/oauth/github", gh -> {
+                GitHubController gitHubController = new GitHubController(cookies, oidc);
+                gh.get("/connect", gitHubController::startConnection)
+                  .get("/callback", gitHubController::githubCallback);
 
-            })
-            .prefix("/groups", groupsRoute -> {
-              // Set up the group routes and controller methods
-              GroupController groups = new GroupController(oidc, templates);
-              groupsRoute.get("/", groups::list)
-                         .get("/new", groups::newForm)
-                         .post("/new", groups::create)
-                         .get("/{groupName}/", groups::detail)
-                         .get("/{groupName}/settings", groups::settings)
-                         .post("/{groupName}/settings", groups::updateSettings)
-                         .get("/{groupName}/verify", groups::verifyForm)
-                         .post("/{groupName}/delete", groups::delete)
-                         .post("/{groupName}/verify/check", groups::checkVerification)
-                         .post("/{groupName}/verify/github", groups::verifyGitHub);
-
-              // Set up the membership routes and controller methods
-              groupsRoute.prefix("/{groupName}/members", membersRoute -> {
+              })
+              .prefix("/groups", groupsRoute -> {
+                GroupController groups = new GroupController(oidc, templates);
                 MembershipController members = new MembershipController(oidc, templates);
-                membersRoute.get("/", members::list)
-                            .post("/invite", members::invite)
-                            .post("/{userId}/accept", members::accept)
-                            .post("/{userId}/decline", members::decline)
-                            .post("/{userId}/remove", members::remove)
-                            .post("/{userId}/role", members::changeRole)
-                            .post("/leave", members::leave);
-              });
-            });
-       })
+                GroupSecurity groupSecurity = new GroupSecurity(oidc, Services.groupService(), Services.membershipService());
+                Middleware isActiveMember = groupSecurity.hasRole(Role.OWNER, Role.CONTRIBUTOR);
+                Middleware isOwner = groupSecurity.hasRole(Role.OWNER);
+
+                // GroupSecurity is installed once at this literal /app/groups prefix and applies to every route under
+                // it. For routes without a {groupName} path attribute (list, new, create) it is a pass-through; for
+                // group-scoped routes it requires the authenticated user to have a membership row in that group
+                // (PENDING or ACTIVE). Adding a new {groupName}-bearing route here is automatically gated.
+                groupsRoute.install(groupSecurity)
+                           .get("/", groups::list)
+                           .get("/new", groups::newForm)
+                           .post("/new", groups::create)
+                           .get("/{groupName}/", groups::detail)
+                           .get("/{groupName}/settings", groups::settings, isActiveMember)
+                           .post("/{groupName}/settings", groups::updateSettings, isOwner)
+                           .get("/{groupName}/verify", groups::verifyForm, isOwner)
+                           .get("/{groupName}/delete", groups::deleteForm, isOwner)
+                           .post("/{groupName}/delete", groups::delete, isOwner)
+                           .post("/{groupName}/verify/check", groups::checkVerification, isOwner)
+                           .post("/{groupName}/verify/github", groups::verifyGitHub, isOwner);
+
+                // Member routes — owner-only admin actions add the stricter HasRole(OWNER) per-route; the base
+                // membership check is already provided by the GroupSecurity install above. Accept/decline always act on
+                // the authenticated user (no {userId} in the URL) and reach the controller for PENDING invitees
+                // (GroupSecurity accepts PENDING rows). Leave reaches the controller for any member row including
+                // PENDING — a PENDING leaver simply deletes their invitation row, equivalent to decline. The service
+                // handles state transitions safely.
+                groupsRoute.prefix("/{groupName}/members", membersRoute -> {
+                  membersRoute.get("/", members::list, isOwner)
+                              .get("/invite", members::inviteForm, isOwner)
+                              .post("/invite", members::invite, isOwner)
+                              .post("/accept", members::accept)
+                              .post("/decline", members::decline)
+                              .get("/{userId}/remove", members::removeForm, isOwner)
+                              .post("/{userId}/remove", members::remove, isOwner)
+                              .get("/{userId}/role", members::changeRoleForm, isOwner)
+                              .post("/{userId}/role", members::changeRole, isOwner)
+                              .get("/leave", members::leaveForm)
+                              .post("/leave", members::leave);
+                });
+              })
+       )
        .missingHandler(this::missing)
-       .start(PORT);
+       .start(port);
   }
 
   private void dashboard(HTTPRequest req, HTTPResponse res) throws IOException {

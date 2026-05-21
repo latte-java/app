@@ -13,13 +13,17 @@
     "ordinaryPassword": "password",
     "ordinaryUserId": "#{UUID()}",
     "githubIdpId": "bef65e1f-0ecf-4c7a-93cb-f58c3ce10b72",
+    "accessTokenPopulateLambdaId": "9bde7abd-5557-41cc-9a40-1048cac3f64e",
     "inviteEmailTemplateId": "a4db4962-efd8-476d-af15-932567f337b8",
     "setPasswordEmailTemplateId": "9ada7df9-914e-4bd6-9e24-6c11abb1ed3f",
     "themeId": "c1d7e3a4-6b2f-4e8a-9f1c-5a0d8b3e2f10",
-    "emailFieldId":    "#{UUID()}",
-    "passwordFieldId": "#{UUID()}",
-    "usernameFieldId": "#{UUID()}",
-    "registrationFormId": "#{UUID()}"
+    "emailFieldId":               "#{UUID()}",
+    "passwordFieldId":            "#{UUID()}",
+    "usernameFieldId":            "#{UUID()}",
+    "registrationFormId":         "#{UUID()}",
+    "selfServiceEmailFieldId":    "#{UUID()}",
+    "selfServiceUsernameFieldId": "#{UUID()}",
+    "selfServiceFormId":          "#{UUID()}"
   },
   "apiKeys": [
     {
@@ -49,8 +53,8 @@
           "fromEmail": "noreply@lattejava.org",
           "defaultFromName": "Latte Java",
           "defaultSubject": "You've been invited to ${groupName!'a Latte Java group'}",
-          "defaultHtmlTemplate": "<p>Hi ${user.firstName!''},</p><p>You've been invited to join the group <strong>${groupName!''}</strong> on Latte Java.</p><p><a href=\"http://localhost:8080/\">Sign in</a> to accept the invitation.</p>",
-          "defaultTextTemplate": "Hi ${user.firstName!''},\n\nYou've been invited to join the group ${groupName!''} on Latte Java.\n\nSign in at http://localhost:8080/ to accept."
+          "defaultHtmlTemplate": "@{emails/group-invitation.html.ftl}",
+          "defaultTextTemplate": "@{emails/group-invitation.txt.ftl}"
         }
       }
     },
@@ -63,8 +67,8 @@
           "fromEmail": "noreply@lattejava.org",
           "defaultFromName": "Latte Java",
           "defaultSubject": "Set your Latte Java password",
-          "defaultHtmlTemplate": "<p>Hi ${user.firstName!''},</p><p>You've been invited to join Latte Java. Click the link below to set a password and finish creating your account.</p><p><a href=\"${tenant.issuer}/password/change/${changePasswordId}?tenantId=${user.tenantId}&client_id=e9fdb985-9173-4e01-9d73-ac2d60d1dc8e&redirect_uri=${'http://localhost:8080/oidc/return'?url}&response_type=code\">Set my password</a></p>",
-          "defaultTextTemplate": "Hi ${user.firstName!''},\n\nYou've been invited to join Latte Java. Visit the link below to set a password and finish creating your account.\n\n${tenant.issuer}/password/change/${changePasswordId}?tenantId=${user.tenantId}&client_id=e9fdb985-9173-4e01-9d73-ac2d60d1dc8e&redirect_uri=${'http://localhost:8080/oidc/return'?url}&response_type=code"
+          "defaultHtmlTemplate": "@{emails/set-password.html.ftl}",
+          "defaultTextTemplate": "@{emails/set-password.txt.ftl}"
         }
       }
     },
@@ -78,33 +82,33 @@
           "variables": {
             "pageBackgroundColor": "#f8fafc",
             "panelBackgroundColor": "#ffffff",
-            "fontColor": "#0f172a",
-            "primaryButtonColor": "#0284c7",
-            "primaryButtonFocusColor": "#0369a1",
+            "fontColor": "#0f172b",
+            "primaryButtonColor": "#00a6f4",
+            "primaryButtonFocusColor": "#0084d1",
             "primaryButtonTextColor": "#ffffff",
             "primaryButtonTextFocusColor": "#ffffff",
-            "linkTextColor": "#0284c7",
-            "linkTextFocusColor": "#0369a1",
-            "deleteButtonColor": "#dc2626",
-            "deleteButtonFocusColor": "#b91c1c",
+            "linkTextColor": "#0084d1",
+            "linkTextFocusColor": "#0069a8",
+            "deleteButtonColor": "#e7000b",
+            "deleteButtonFocusColor": "#c10007",
             "deleteButtonTextColor": "#ffffff",
             "deleteButtonTextFocusColor": "#ffffff",
             "inputBackgroundColor": "#ffffff",
-            "inputTextColor": "#0f172a",
-            "inputIconColor": "#94a3b8",
-            "iconColor": "#475569",
+            "inputTextColor": "#0f172b",
+            "inputIconColor": "#90a1b9",
+            "iconColor": "#45556c",
             "iconBackgroundColor": "#f1f5f9",
-            "alertBackgroundColor": "#e0f2fe",
-            "alertFontColor": "#0c4a6e",
-            "errorFontColor": "#b91c1c",
-            "errorIconColor": "#dc2626",
-            "infoIconColor": "#0284c7",
-            "monoFontColor": "#0f172a",
+            "alertBackgroundColor": "#dff2fe",
+            "alertFontColor": "#024a70",
+            "errorFontColor": "#c10007",
+            "errorIconColor": "#e7000b",
+            "infoIconColor": "#0084d1",
+            "monoFontColor": "#0f172b",
             "borderRadius": "8px",
             "fontFamily": "Inter, ui-sans-serif, system-ui, sans-serif",
             "monoFontFamily": "JetBrains Mono, ui-monospace, monospace",
             "logoImageURL": "http://localhost:8080/static/images/logo.svg",
-            "logoImageSize": "200px",
+            "logoImageSize": "10rem",
             "favicons": [
               { "href": "http://localhost:8080/static/favicon-32x32.png", "rel": "icon", "type": "image/png" },
               { "href": "http://localhost:8080/static/favicon-16x16.png", "rel": "icon", "type": "image/png" }
@@ -127,6 +131,22 @@
             "defaultFromName": "Latte Java",
             "implicitEmailVerificationAllowed": true,
             "setPasswordEmailTemplateId": "#{setPasswordEmailTemplateId}"
+          },
+          "webAuthnConfiguration": {
+            "enabled": true,
+            "debug": false,
+            "relyingPartyId": "localhost",
+            "relyingPartyName": "Latte Java",
+            "bootstrapWorkflow": {
+              "enabled": true,
+              "authenticatorAttachmentPreference": "platform",
+              "userVerificationRequirement": "required"
+            },
+            "reauthenticationWorkflow": {
+              "enabled": true,
+              "authenticatorAttachmentPreference": "platform",
+              "userVerificationRequirement": "required"
+            }
           }
         }
       }
@@ -186,6 +206,59 @@
     },
     {
       "method": "POST",
+      "url": "/api/form/field/#{selfServiceEmailFieldId}",
+      "body": {
+        "field": {
+          "key": "user.email",
+          "name": "[Latte Account] Email",
+          "required": true
+        }
+      }
+    },
+    {
+      "method": "POST",
+      "url": "/api/form/field/#{selfServiceUsernameFieldId}",
+      "body": {
+        "field": {
+          "key": "user.username",
+          "name": "[Latte Account] Username",
+          "required": true
+        }
+      }
+    },
+    {
+      "method": "POST",
+      "url": "/api/form/#{selfServiceFormId}",
+      "body": {
+        "form": {
+          "name": "Latte Account Management",
+          "type": "selfServiceUser",
+          "steps": [
+            {
+              "type": "collectData",
+              "fields": [
+                "#{selfServiceEmailFieldId}",
+                "#{selfServiceUsernameFieldId}"
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "method": "POST",
+      "url": "/api/lambda/#{accessTokenPopulateLambdaId}",
+      "body": {
+        "lambda": {
+          "name": "[Latte] Access token populate",
+          "type": "JWTPopulate",
+          "engineType": "GraalJS",
+          "body": "function populate(jwt, user, registration) {\n  jwt.preferred_username = user.username;\n  jwt.email = user.email;\n}"
+        }
+      }
+    },
+    {
+      "method": "POST",
       "url": "/api/application/#{applicationId}",
       "tenantId": "#{defaultTenantId}",
       "body": {
@@ -194,7 +267,9 @@
           "oauthConfiguration": {
             "authorizedRedirectURLs": [
               "http://localhost:8080/oidc/logout-return",
-              "http://localhost:8080/oidc/return"
+              "http://localhost:8080/oidc/return",
+              "http://localhost:8081/oidc/logout-return",
+              "http://localhost:8081/oidc/return"
             ],
             "logoutURL": "http://localhost:8080/oidc/logout-return",
             "clientSecret": "#{clientSecret}",
@@ -210,10 +285,16 @@
             "accessTokenKeyId": "#{asymmetricKeyId}",
             "idTokenKeyId": "#{asymmetricKeyId}"
           },
+          "lambdaConfiguration": {
+            "accessTokenPopulateId": "#{accessTokenPopulateLambdaId}"
+          },
           "registrationConfiguration": {
             "enabled": true,
             "type": "advanced",
             "formId": "#{registrationFormId}"
+          },
+          "formConfiguration": {
+            "selfServiceFormId": "#{selfServiceFormId}"
           }
         }
       }

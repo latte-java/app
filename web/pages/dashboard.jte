@@ -9,7 +9,7 @@
 !{List<Group> top5 = groups.stream().limit(5).toList();}
 !{long verified = groups.stream().filter(g -> g.state() == GroupState.VERIFIED).count();}
 !{long pending  = groups.stream().filter(g -> g.state() == GroupState.PENDING).count();}
-!{var title = view.viewer().name().split(" ")[0];}
+!{var title = view.viewer().username();}
 
 @template.layout.main(view=view, pageTitle="Dashboard", activeNav="dashboard",
 content=@`

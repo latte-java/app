@@ -76,21 +76,18 @@ public class GroupService {
   }
 
   /**
-   * Deletes {@code group} on behalf of {@code current}. The caller must be an active OWNER of the group, and the
-   * group's R2 prefix must be empty. On success, the group row is deleted (cascading to members and verifications).
+   * Deletes {@code group}. Authorization is enforced by the route's
+   * {@link org.lattejava.app.security.GroupSecurity} middleware (OWNER required); this method only checks the
+   * data-integrity precondition that the group's R2 prefix is empty. On success, the group row is deleted (cascading
+   * to members and verifications).
    *
-   * @param group   The group to delete.
-   * @param current The authenticated user requesting the deletion.
-   * @throws ValidationException If the caller is not an OWNER or the bucket is not empty.
+   * @param group The group to delete.
+   * @throws ValidationException If the bucket is not empty.
    */
-  public void delete(Group group, User current) {
+  public void delete(Group group) {
     Errors errors = new Errors();
-    Optional<Member> membership = databaseClient.findMember(group.name(), current.userId());
-    if (membership.isEmpty() || membership.get().role() != Role.OWNER) {
-      errors.addGeneralError("[notOwner]group", "Only an OWNER can delete the group [%s].", group.name());
-    }
     String prefix = group.name().replace('.', '/') + "/";
-    if (errors.empty() && !r2Client.isPrefixEmpty(prefix)) {
+    if (!r2Client.isPrefixEmpty(prefix)) {
       errors.addGeneralError("[hasArtifacts]group",
           "The group [%s] has published artifacts and cannot be deleted.", group.name());
     }

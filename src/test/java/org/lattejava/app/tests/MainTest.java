@@ -9,7 +9,6 @@ import module java.base;
 import module org.lattejava.app;
 import module org.lattejava.web;
 import module org.testng;
-import module restify;
 
 @Test
 public class MainTest extends BaseTest {
@@ -42,7 +41,7 @@ public class MainTest extends BaseTest {
   public void dashboard() throws Exception {
     var string = new StringBodyAsserter();
     oidc.login("test@lattejava.org", "password", "e9fdb985-9173-4e01-9d73-ac2d60d1dc8e");
-    test.get("/app/dashboard")
+    test.get("/app/")
         .assertStatus(200)
         .assertBodyAs(string, s -> s.contains("<body").contains("org.lattejava"));
   }
@@ -57,7 +56,7 @@ public class MainTest extends BaseTest {
   public void groupDetail() throws Exception {
     var string = new StringBodyAsserter();
     oidc.login("test@lattejava.org", "password", "e9fdb985-9173-4e01-9d73-ac2d60d1dc8e");
-    test.get("/app/groups/org.lattejava")
+    test.get("/app/groups/org.lattejava/")
         .assertStatus(200)
         .assertBodyAs(string, s -> s.contains("<body").contains("org.lattejava"));
   }
@@ -68,7 +67,7 @@ public class MainTest extends BaseTest {
     oidc.login("test@lattejava.org", "password", "e9fdb985-9173-4e01-9d73-ac2d60d1dc8e");
     test.get("/app/groups/org.lattejava/members/")
         .assertStatus(200)
-        .assertBodyAs(string, s -> s.contains("<body").contains("org.lattejava"));
+        .assertBodyAs(string, s -> s.contains("<body").contains("org.lattejava").contains("test@lattejava.org"));
   }
 
   @Test
@@ -113,5 +112,14 @@ public class MainTest extends BaseTest {
         .post("/app/groups/" + name + "/settings")
         .assertStatus(200)
         .assertBodyAs(string, s -> s.contains("Descriptions must be 500 characters or fewer").contains("RETAINME-"));
+  }
+
+  @Test
+  public void viewerUsernameRenders() throws Exception {
+    var string = new StringBodyAsserter();
+    oidc.login("test@lattejava.org", "password", "e9fdb985-9173-4e01-9d73-ac2d60d1dc8e");
+    test.get("/app/")
+        .assertStatus(200)
+        .assertBodyAs(string, s -> s.contains("<body").contains("OrdinaryUser"));
   }
 }

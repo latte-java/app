@@ -15,6 +15,6 @@ public record MainView(
     List<Group> groupsForSidebar,
     String activeNav,      // "dashboard" | "groups" | "artifacts" | "settings" | ...
     String activeGroupId,  // nullable
-    String theme           // "light" | "dark"
+    String accountURL      // FusionAuth self-service account-management URL
 ) {
 }

@@ -2,8 +2,11 @@
 @import org.lattejava.app.model.GroupState
 @import org.lattejava.app.model.Member
 @import org.lattejava.app.model.MembershipState
-@param Group group
-@param Member viewerMembership = null
+@import org.lattejava.app.model.view.GroupView
+@param GroupView groupView
+
+!{Group group = groupView.group();}
+!{Member viewerMembership = groupView.viewerMembership();}
 
 <div class="grid grid-cols-1 lg:grid-cols-5 gap-4 items-start">
   <div class="lg:col-span-3">
@@ -13,12 +16,12 @@
           <div class="text-sm font-semibold text-slate-900 dark:text-slate-100">You've been invited</div>
           <p class="mt-1 text-sm text-slate-600 dark:text-slate-300">Accept to join this group.</p>
         </div>
-        <form method="post" action="/app/groups/${group.name()}/members/${viewerMembership.userId().toString()}/accept" class="inline mr-2">
+        <form method="post" action="/app/groups/${group.name()}/members/accept" class="inline mr-2">
           <button type="submit" class="px-3 py-1.5 text-sm font-medium text-white bg-sky-600 rounded-md hover:bg-sky-700">
             Accept
           </button>
         </form>
-        <form method="post" action="/app/groups/${group.name()}/members/${viewerMembership.userId().toString()}/decline" class="inline">
+        <form method="post" action="/app/groups/${group.name()}/members/decline" class="inline">
           <button type="submit" class="px-3 py-1.5 text-sm font-medium text-slate-700 bg-white border border-slate-200 rounded-md hover:bg-slate-50 dark:bg-slate-900 dark:text-slate-300 dark:border-slate-700">
             Decline
           </button>

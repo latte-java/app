@@ -6,11 +6,13 @@
 @param gg.jte.Content content
 
 <!doctype html>
-<html lang="en" class="">
+<html lang="en">
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>${pageTitle} · Latte repository</title>
+  <script src="/static/js/CopyButton-0.1.0.js"></script>
+  <script src="/static/js/ThemeSwitcher-0.1.0.js"></script>
   <link rel="icon" href="/static/images/logo-cup.svg" type="image/svg+xml"/>
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
@@ -26,6 +28,5 @@
     </div>
   </main>
 </div>
-<script src="/static/js/app.js"></script>
 </body>
 </html>

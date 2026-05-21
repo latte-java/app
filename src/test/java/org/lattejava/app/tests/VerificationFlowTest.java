@@ -28,6 +28,7 @@ public class VerificationFlowTest extends BaseTest {
   public void checkVerification_pendingGitHubGroup_redirectsToDetail() throws Exception {
     String name = "io.github.verifyflow.check";
     db.insertGroup(new Group(name, "", GroupState.PENDING, null, Instant.now(), null));
+    insertTestUserAsOwner(name);
     try {
       oidc.login("test@lattejava.org", "password", APP_ID);
       test.post("/app/groups/" + name + "/verify/check")
@@ -47,6 +48,7 @@ public class VerificationFlowTest extends BaseTest {
   public void checkVerification_verifiedGroup_redirectsAndStaysVerified() throws Exception {
     String name = "test.verifyflow.checkverified";
     db.insertGroup(new Group(name, "", GroupState.VERIFIED, null, Instant.now(), Instant.now()));
+    insertTestUserAsOwner(name);
     try {
       oidc.login("test@lattejava.org", "password", APP_ID);
       test.post("/app/groups/" + name + "/verify/check")
@@ -66,6 +68,7 @@ public class VerificationFlowTest extends BaseTest {
   public void verifyForm_failedGroup_rendersExpiredNotice() throws Exception {
     String name = "test.verifyflow.failed";
     db.insertGroup(new Group(name, "", GroupState.FAILED, "code-failed", Instant.now(), null));
+    insertTestUserAsOwner(name);
     try {
       var string = new StringBodyAsserter();
       oidc.login("test@lattejava.org", "password", APP_ID);
@@ -83,6 +86,7 @@ public class VerificationFlowTest extends BaseTest {
     String name = "test.verifyflow.pending";
     db.insertGroup(new Group(name, "", GroupState.PENDING, "code-pending", Instant.now(), null));
     db.insertVerification(new GroupVerification(name, Instant.now(), Instant.now()));
+    insertTestUserAsOwner(name);
     try {
       var string = new StringBodyAsserter();
       oidc.login("test@lattejava.org", "password", APP_ID);
@@ -99,6 +103,7 @@ public class VerificationFlowTest extends BaseTest {
   public void verifyForm_verifiedGroup_redirectsToDetail() throws Exception {
     String name = "test.verifyflow.verified";
     db.insertGroup(new Group(name, "", GroupState.VERIFIED, null, Instant.now(), Instant.now()));
+    insertTestUserAsOwner(name);
     try {
       oidc.login("test@lattejava.org", "password", APP_ID);
       test.get("/app/groups/" + name + "/verify")

@@ -7,11 +7,12 @@ package org.lattejava.app.service;
 import module fusionauth.java.client;
 import module java.base;
 import module org.lattejava.app;
-import module restify;
+import module org.lattejava.web;
 
+import com.inversoft.rest.*;
 import org.lattejava.app.model.Member;
 import org.lattejava.app.model.User;
-import org.lattejava.web.*;
+import org.lattejava.web.Configuration;
 
 public class MembershipService {
   private static final UUID APPLICATION_ID = UUID.fromString("e9fdb985-9173-4e01-9d73-ac2d60d1dc8e");
@@ -57,6 +58,34 @@ public class MembershipService {
     databaseClient.deleteMember(groupName, userId);
   }
 
+  /**
+   * Like {@link #findMember(String, UUID)}, but enriches the returned {@link Member#user()} from FusionAuth so callers
+   * that need email/username (member-detail forms, role/remove confirmation pages) get a single-row D1 read plus a
+   * single FA {@code retrieveUser} call rather than re-fetching every member of the group via {@link #listMembers}.
+   *
+   * @param groupName The group.
+   * @param userId    The FusionAuth user UUID of the member.
+   * @return The enriched member, or empty if no row exists.
+   */
+  public Optional<Member> findEnrichedMember(String groupName, UUID userId) {
+    Optional<Member> memberOpt = databaseClient.findMember(groupName, userId);
+    if (memberOpt.isEmpty()) {
+      return memberOpt;
+    }
+
+    Member m = memberOpt.get();
+    ClientResponse<UserResponse, ?> response = fusionAuth.retrieveUser(userId);
+    User user;
+    if (response.wasSuccessful() && response.successResponse != null && response.successResponse.user != null) {
+      user = UserService.toUser(response.successResponse.user);
+    } else {
+      LOG.log(System.Logger.Level.WARNING,
+          "FusionAuth has no user for member [" + m.userId() + "] in group [" + m.groupName() + "]");
+      user = m.user();
+    }
+    return Optional.of(new Member(m.groupName(), user, m.role(), m.state(), m.invitedBy(), m.invitedAt(), m.joinedAt()));
+  }
+
   public Optional<Member> findMember(String groupName, UUID userId) {
     return databaseClient.findMember(groupName, userId);
   }
@@ -69,9 +98,11 @@ public class MembershipService {
 
     String email = request.email();
     UUID userId;
+    User invitedUser;
     ClientResponse<UserResponse, ?> lookup = fusionAuth.retrieveUserByEmail(email);
     if (lookup.wasSuccessful() && lookup.successResponse != null && lookup.successResponse.user != null) {
       userId = lookup.successResponse.user.id;
+      invitedUser = UserService.toUser(lookup.successResponse.user);
 
       // This is only possible for existing users
       Errors dupErrors = validator.validateNoDuplicateMembership(request.groupName(), userId, email);
@@ -87,6 +118,7 @@ public class MembershipService {
       }
     } else {
       userId = UUID.randomUUID();
+      invitedUser = new User(userId, email, null);
       var newUser = new io.fusionauth.domain.User().with(u -> u.id = userId)
                                                    .with(u -> u.email = email);
       var registration = new UserRegistration().with(ur -> ur.applicationId = APPLICATION_ID);
@@ -102,7 +134,7 @@ public class MembershipService {
     Instant now = Instant.now();
     Member member = new Member(
         request.groupName(),
-        userId,
+        invitedUser,
         request.role(),
         MembershipState.PENDING,
         inviter.userId(),
@@ -123,7 +155,34 @@ public class MembershipService {
   }
 
   public List<Member> listMembers(String groupName) {
-    return databaseClient.listMembers(groupName);
+    List<Member> members = databaseClient.listMembers(groupName);
+    if (members.isEmpty()) {
+      return members;
+    }
+
+    List<UUID> ids = members.stream().map(Member::userId).toList();
+    ClientResponse<SearchResponse, ?> response = fusionAuth.searchUsersByIds(ids);
+    Map<UUID, io.fusionauth.domain.User> byId = new HashMap<>();
+    if (response.wasSuccessful() && response.successResponse != null && response.successResponse.users != null) {
+      for (io.fusionauth.domain.User faUser : response.successResponse.users) {
+        byId.put(faUser.id, faUser);
+      }
+    }
+
+    List<Member> enriched = new ArrayList<>(members.size());
+    for (Member m : members) {
+      io.fusionauth.domain.User faUser = byId.get(m.userId());
+      User user;
+      if (faUser == null) {
+        LOG.log(System.Logger.Level.WARNING,
+            "FusionAuth has no user for member [" + m.userId() + "] in group [" + m.groupName() + "]");
+        user = m.user();
+      } else {
+        user = UserService.toUser(faUser);
+      }
+      enriched.add(new Member(m.groupName(), user, m.role(), m.state(), m.invitedBy(), m.invitedAt(), m.joinedAt()));
+    }
+    return enriched;
   }
 
   public void remove(String groupName, UUID targetUserId, User current) {

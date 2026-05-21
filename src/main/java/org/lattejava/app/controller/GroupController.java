@@ -5,8 +5,6 @@ import module org.lattejava.app;
 import module org.lattejava.http;
 import module org.lattejava.web;
 
-import org.lattejava.app.model.Member;
-
 /**
  * A controller for groups.
  *
@@ -71,34 +69,28 @@ public class GroupController {
     }
   }
 
-  public void delete(HTTPRequest req, HTTPResponse res) {
-    String groupName = (String) req.getAttribute(NAME);
-    User current = oidc.user();
-    Optional<Group> groupOpt = groupService.findGroup(groupName);
-    if (groupOpt.isEmpty()) {
-      res.setStatus(404);
-      return;
-    }
-
+  public void delete(HTTPRequest req, HTTPResponse res) throws IOException {
+    User user = oidc.user();
+    Group group = findGroup(req);
     try {
-      groupService.delete(groupOpt.get(), current);
+      groupService.delete(group);
       res.sendRedirect("/app/groups/", 303);
     } catch (ValidationException e) {
-      res.sendRedirect("/app/groups/" + groupName + "/settings", 303);
+      renderDeleteForm(req, res, user, group, e.errors());
     }
+  }
+
+  public void deleteForm(HTTPRequest req, HTTPResponse res) throws IOException {
+    User user = oidc.user();
+    Group group = findGroup(req);
+    renderDeleteForm(req, res, user, group, new Errors());
   }
 
   public void detail(HTTPRequest req, HTTPResponse res) throws IOException {
     User user = oidc.user();
     Group group = findGroup(req);
-    Optional<Member> viewerMembership = membershipService.findMember(group.name(), user.userId());
-    MainView view = viewService.buildMainView(user);
-    Map<String, Object> params = new HashMap<>();
-    params.put("activeTab", "overview");
-    params.put("group", group);
-    params.put("view", view);
-    params.put("viewerMembership", viewerMembership.orElse(null));
-    templates.html("pages/groups/detail.jte", req, res, params);
+    GroupView groupView = viewService.buildGroupView(user, group, "overview");
+    templates.html("pages/groups/detail.jte", req, res, Map.of("groupView", groupView));
   }
 
   public Group findGroup(HTTPRequest req) {
@@ -141,14 +133,8 @@ public class GroupController {
   public void settings(HTTPRequest req, HTTPResponse res) throws IOException {
     User user = oidc.user();
     Group group = findGroup(req);
-    MainView view = viewService.buildMainView(user);
-    templates.html("pages/groups/detail.jte", req, res,
-        Map.of(
-            "activeTab", "settings",
-            "group", group,
-            "view", view
-        )
-    );
+    GroupView groupView = viewService.buildGroupView(user, group, "settings");
+    templates.html("pages/groups/detail.jte", req, res, Map.of("groupView", groupView));
   }
 
   public void updateSettings(HTTPRequest req, HTTPResponse res) throws IOException {
@@ -159,14 +145,12 @@ public class GroupController {
       groupService.updateDescription(group, description);
       res.sendRedirect("/app/groups/" + group.name() + "/", 303);
     } catch (ValidationException e) {
-      MainView view = viewService.buildMainView(user);
       Group submitted = new Group(group.name(), description, group.state(), group.verificationCode(),
           group.createdAt(), group.verifiedAt());
+      GroupView groupView = viewService.buildGroupView(user, submitted, "settings");
       templates.html("pages/groups/detail.jte", req, res,
           Map.of(
-              "activeTab", "settings",
-              "group", submitted,
-              "view", view,
+              "groupView", groupView,
               "errors", e.errors()
           )
       );
@@ -183,13 +167,12 @@ public class GroupController {
     Optional<GroupVerification> verOpt = verificationService.findVerification(group.name());
     VerificationView verification = VerificationView.buildView(group, verOpt.orElse(null));
     User user = oidc.user();
-    MainView view = viewService.buildMainView(user);
+    GroupView groupView = viewService.buildGroupView(user, group, "verify");
     String status = req.getURLParameter("status");
     boolean githubLinked = GroupValidator.kindOf(group.name()) == GroupKind.REVERSE_DNS_GITHUB
         && verificationService.hasGitHubLink(user.userId());
     Map<String, Object> params = new HashMap<>();
-    params.put("view", view);
-    params.put("group", group);
+    params.put("groupView", groupView);
     params.put("verification", verification);
     params.put("status", status);
     params.put("githubLinked", githubLinked);
@@ -214,5 +197,15 @@ public class GroupController {
     }
 
     res.sendRedirect("/app/groups/" + groupName + "/?status=" + result.name().toLowerCase(), 303);
+  }
+
+  private void renderDeleteForm(HTTPRequest req, HTTPResponse res, User user, Group group, Errors errors) throws IOException {
+    GroupView groupView = viewService.buildGroupView(user, group, "settings");
+    templates.html("pages/groups/delete.jte", req, res,
+        Map.of(
+            "groupView", groupView,
+            "errors", errors
+        )
+    );
   }
 }

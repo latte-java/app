@@ -9,16 +9,28 @@ import module java.base;
 import module org.lattejava.app;
 import module org.lattejava.web;
 import module org.testng;
-import module restify;
 
+import com.inversoft.rest.*;
 import org.lattejava.app.Main;
+import org.lattejava.app.model.Member;
 
 @Test
 public abstract class BaseTest {
   public static DatabaseClient db;
   public static Main main;
   public static OIDCTestFixture oidc;
-  public static WebTest test = new WebTest(Main.PORT);
+  public static UUID testUserId;
+  public static WebTest test = new WebTest(8081);
+
+  /**
+   * Inserts the FA test user as an ACTIVE OWNER of the given group. Use this in flow tests to satisfy the
+   * {@link org.lattejava.app.security.GroupSecurity} middleware on owner-only routes (settings, verify, delete,
+   * invite, role/remove).
+   */
+  @Test(enabled = false)
+  public static void insertTestUserAsOwner(String groupName) {
+    db.insertMember(new Member(groupName, testUserId, Role.OWNER, MembershipState.ACTIVE, null, null, Instant.now()));
+  }
 
   @AfterMethod
   public void afterMethod() {
@@ -32,7 +44,7 @@ public abstract class BaseTest {
 
   @BeforeSuite
   public static void beforeSuite() {
-    main = new Main();
+    main = new Main(8081);
     main.main();
     db = new DatabaseClient(main.config);
     oidc = new OIDCTestFixture(test, main.oidcConfig);
@@ -64,11 +76,12 @@ public abstract class BaseTest {
         main.config.get("fusionauth.apiKey"),
         main.config.get("fusionauth.baseUrl")
     );
+
     ClientResponse<UserResponse, ?> userResponse = fa.retrieveUserByEmail("test@lattejava.org");
     if (!userResponse.wasSuccessful() || userResponse.successResponse.user == null) {
       throw new IllegalStateException("FA test user not found - is FusionAuth running with kickstart applied?");
     }
-    UUID testUserId = userResponse.successResponse.user.id;
+    testUserId = userResponse.successResponse.user.id;
     db.query(
         "INSERT INTO members (group_name, user_id, role, state, invited_by, invited_at, joined_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
         "org.lattejava",

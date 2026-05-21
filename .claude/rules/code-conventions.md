@@ -5,6 +5,10 @@ paths:
 
 # Code Conventions
 
+## Indentation
+
+All source files should be indented with 2 spaces. Continuation indents should be 4 spaces.
+
 ## Acronym Naming
 
 Always use full uppercase for acronyms in Java identifiers — class names, method names, field names, local variables. Do NOT use title-case (camelCase-with-only-the-first-letter-uppercase) for acronyms. If a field or method name starts with an acronym, lowercase the entire acronym.
@@ -121,7 +125,7 @@ import module java.base;
 
 Add a blank line between import groups.
 
-## Order inside classes
+## Order inside classes and interfaces (not records)
 
 Inside a class, the order should always be:
 
@@ -138,10 +142,8 @@ Inside a class, the order should always be:
 
 When Javadoc is written, use sentence structure, punctuation, and capitalization of common American English publications. This rule applies to @param, @return, @throws, and the main comment block.
 
-## Line length
+## Line length and wrapping
 
-120 characters is the maximum line length. Do not wrap lines before 120 characters.
-
-## Wrapping
+120 characters is the target line length. *DO NOT* wrap lines before 120 characters. If a line is longer than 120 characters, but keeping it on one line makes it easier to read, do not wrap it. 
 
 When wrapping lines, break on logical boundaries and avoid excessive wrapping. If breaking in an if-statement, break after the logical operator (`&&` or `||`). If breaking on chained method calls, break before the dot and align the dots with the dot of the previous line.

@@ -1,22 +1,19 @@
-@import org.lattejava.app.model.view.MainView
 @import org.lattejava.app.model.Group
 @import org.lattejava.app.model.GroupState
 @import org.lattejava.app.model.Member
+@import org.lattejava.app.model.view.GroupView
 @import org.lattejava.app.error.Errors
 @import java.util.List
-@param MainView view
-@param Group group
-@param String activeTab
-@param String inviteEmail = ""
-@param String inviteRole = "CONTRIBUTOR"
+@param GroupView groupView
 @param String status = ""
 @param Errors errors = new Errors()
 @param List<Member> members = java.util.List.of()
-@param Member viewerMembership = null
 
-!{String base = "/app/groups/" + group.name();}
+!{Group group = groupView.group();}
+!{String activeTab = groupView.activeTab();}
+!{String base = groupView.base();}
 
-@template.layout.main(view=view, pageTitle=group.name(), activeNav="groups", activeGroupId=group.name(), content=@`
+@template.layout.main(view=groupView.mainView(), pageTitle=group.name(), activeNav="groups", activeGroupId=group.name(), content=@`
   <nav class="flex items-center gap-1.5 mb-3.5 text-sm font-medium text-slate-500">
     <a class="hover:text-slate-900 dark:hover:text-slate-100 no-underline" href="/app/groups/">Groups</a>
     @template.components.icon(name = "chevron-right", size = 11)
@@ -46,20 +43,24 @@
 <%--    <a class="inline-flex items-center gap-2 px-3.5 py-3 -mb-px border-b-2 text-sm no-underline transition-colors ${activeTab.equals("artifacts") ? "border-sky-500 text-slate-900 dark:text-slate-100 font-semibold" : "border-transparent text-slate-500 hover:text-slate-900 dark:hover:text-slate-100"}" href="${base}/artifacts">--%>
 <%--      Artifacts--%>
 <%--    </a>--%>
-    <a class="inline-flex items-center gap-2 px-3.5 py-3 -mb-px border-b-2 text-sm no-underline transition-colors ${activeTab.equals("members") ? "border-sky-500 text-slate-900 dark:text-slate-100 font-semibold" : "border-transparent text-slate-500 hover:text-slate-900 dark:hover:text-slate-100"}" href="${base}/members/">
-      Members
-    </a>
-    <a class="inline-flex items-center gap-2 px-3.5 py-3 -mb-px border-b-2 text-sm no-underline transition-colors ${activeTab.equals("settings") ? "border-sky-500 text-slate-900 dark:text-slate-100 font-semibold" : "border-transparent text-slate-500 hover:text-slate-900 dark:hover:text-slate-100"}" href="${base}/settings">
-      Settings
-    </a>
+    @if(groupView.canManage())
+      <a class="inline-flex items-center gap-2 px-3.5 py-3 -mb-px border-b-2 text-sm no-underline transition-colors ${activeTab.equals("members") ? "border-sky-500 text-slate-900 dark:text-slate-100 font-semibold" : "border-transparent text-slate-500 hover:text-slate-900 dark:hover:text-slate-100"}" href="${base}/members/">
+        Members
+      </a>
+    @endif
+    @if(groupView.isActiveMember())
+      <a class="inline-flex items-center gap-2 px-3.5 py-3 -mb-px border-b-2 text-sm no-underline transition-colors ${activeTab.equals("settings") ? "border-sky-500 text-slate-900 dark:text-slate-100 font-semibold" : "border-transparent text-slate-500 hover:text-slate-900 dark:hover:text-slate-100"}" href="${base}/settings">
+        Settings
+      </a>
+    @endif
   </nav>
 
   <div class="h-6"></div>
   @if(activeTab.equals("members"))
-    @template.pages.groups.members(view = view, group = group, activeTab = activeTab, inviteEmail = inviteEmail, inviteRole = inviteRole, errors = errors, members = members)
+    @template.pages.groups.members(groupView=groupView, members=members)
   @elseif(activeTab.equals("settings"))
-    @template.pages.groups.settings(group = group, errors = errors)
+    @template.pages.groups.settings(groupView=groupView, errors=errors)
   @else
-    @template.pages.groups.overview(group = group, viewerMembership = viewerMembership)
+    @template.pages.groups.overview(groupView=groupView)
   @endif
 `)

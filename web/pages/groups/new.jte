@@ -86,7 +86,7 @@ content=@`
     @template.components.input(name="name", value=name, placeholder="io.nimbusworks", monospace=true, hint="Reverse-DNS like com.acme or a short name like acme-tools. Lowercase letters, digits, and hyphens.", error=nameError)
     <div class="h-6"></div>
     <h3 class="m-0 mb-3 text-base font-bold text-slate-900 dark:text-slate-100">Description</h3>
-    @template.components.textarea(name="description", error=nameError, placeholder="What does this group publish?", hint="Optional. Shown on the group's page.Optional. Shown on the group's page.")
+    @template.components.textarea(name="description", error=nameError, placeholder="What does this group publish?", hint="Optional. Shown on the group's page.")
     <div class="h-6"></div>
     <div class="flex gap-2 justify-end">
       @template.components.button(label = "Cancel", variant = "ghost", href = "/app/groups/")

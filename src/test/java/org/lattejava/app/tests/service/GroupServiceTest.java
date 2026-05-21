@@ -106,45 +106,27 @@ public class GroupServiceTest {
   }
 
   @Test
-  public void delete_nonOwner_throws() {
-    Group g = new Group("test.delete.notowner", "", GroupState.VERIFIED, null, Instant.ofEpochMilli(1L), Instant.ofEpochMilli(1L));
-    client.insertGroup(g);
-    UUID contributor = UUID.fromString("dd000005-0000-0000-0000-000000000002");
-    client.insertMember(new Member("test.delete.notowner", contributor, Role.CONTRIBUTOR, MembershipState.ACTIVE, null, null, Instant.ofEpochMilli(1L)));
-    R2Client fakeR2 = _ -> true;
-    GroupService localService = new GroupService(config, validator, fakeR2);
-    try {
-      expectThrows(ValidationException.class, () -> localService.delete(g, new User(contributor, "c@x", "C")));
-    } finally {
-      client.deleteGroup("test.delete.notowner");
-    }
-  }
-
-  @Test
-  public void delete_owner_bucketNotEmpty_throws() {
+  public void delete_bucketNotEmpty_throws() {
+    // Role-based authorization is enforced by GroupSecurity middleware at the route layer, not by GroupService.
     Group g = new Group("test.delete.hasartifacts", "", GroupState.VERIFIED, null, Instant.ofEpochMilli(1L), Instant.ofEpochMilli(1L));
     client.insertGroup(g);
-    UUID owner = UUID.fromString("dd000005-0000-0000-0000-000000000003");
-    client.insertMember(new Member("test.delete.hasartifacts", owner, Role.OWNER, MembershipState.ACTIVE, null, null, Instant.ofEpochMilli(1L)));
     R2Client fakeR2 = _ -> false; // not empty
     GroupService localService = new GroupService(config, validator, fakeR2);
     try {
-      expectThrows(ValidationException.class, () -> localService.delete(g, new User(owner, "o@x", "O")));
+      expectThrows(ValidationException.class, () -> localService.delete(g));
     } finally {
       client.deleteGroup("test.delete.hasartifacts");
     }
   }
 
   @Test
-  public void delete_owner_emptyBucket_succeeds() {
+  public void delete_emptyBucket_succeeds() {
     Group g = new Group("test.delete.empty", "", GroupState.VERIFIED, null, Instant.ofEpochMilli(1L), Instant.ofEpochMilli(1L));
     client.insertGroup(g);
-    UUID owner = UUID.fromString("dd000005-0000-0000-0000-000000000001");
-    client.insertMember(new Member("test.delete.empty", owner, Role.OWNER, MembershipState.ACTIVE, null, null, Instant.ofEpochMilli(1L)));
     R2Client fakeR2 = _ -> true; // empty
     GroupService localService = new GroupService(config, validator, fakeR2);
     try {
-      localService.delete(g, new User(owner, "o@x", "O"));
+      localService.delete(g);
       assertFalse(client.findGroup("test.delete.empty").isPresent());
     } catch (RuntimeException e) {
       client.deleteGroup("test.delete.empty");

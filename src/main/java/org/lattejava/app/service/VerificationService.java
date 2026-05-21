@@ -7,11 +7,12 @@ package org.lattejava.app.service;
 import module fusionauth.java.client;
 import module java.base;
 import module org.lattejava.app;
-import module restify;
+import module org.lattejava.web;
 
+import com.inversoft.rest.*;
 import org.lattejava.app.model.Group;
 import org.lattejava.app.model.User;
-import org.lattejava.web.*;
+import org.lattejava.web.Configuration;
 
 public class VerificationService {
   public static final Duration DEADLINE = Duration.ofHours(48);
@@ -155,8 +156,10 @@ public class VerificationService {
     link.userId = userId;
     link.token = token;
     link.displayName = githubUser.login();
+
     IdentityProviderLinkRequest request = new IdentityProviderLinkRequest();
     request.identityProviderLink = link;
+
     ClientResponse<IdentityProviderLinkResponse, ?> response = fusionAuth.createUserLink(request);
     if (!response.wasSuccessful()) {
       System.getLogger(VerificationService.class.toString()).log(System.Logger.Level.ERROR,

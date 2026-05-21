@@ -4,11 +4,14 @@
  */
 package org.lattejava.app.tests.service;
 
+import module fusionauth.java.client;
 import module java.base;
 import module org.lattejava.app;
 import java.util.Optional;
 
+import org.lattejava.app.model.Group;
 import org.lattejava.app.model.Member;
+import org.lattejava.app.model.User;
 import org.lattejava.web.*;
 import org.testng.annotations.*;
 
@@ -207,6 +210,29 @@ public class MembershipServiceTest {
   }
 
   @Test
+  public void listMembersEnrichesUserFromFusionAuth() {
+    FusionAuthClient fa = new FusionAuthClient(config.get("fusionauth.apiKey"), config.get("fusionauth.baseUrl"));
+    UUID testUserId = fa.retrieveUserByEmail("test@lattejava.org").successResponse.user.id;
+
+    client.query("DELETE FROM members WHERE group_name = ?", "test.enrich.fixture");
+    client.query("DELETE FROM groups WHERE name = ?", "test.enrich.fixture");
+    client.query("INSERT INTO groups (name, description, state, verification_code, created_at, verified_at) VALUES (?, ?, ?, ?, ?, ?)",
+        "test.enrich.fixture", "Enrich fixture", "VERIFIED", null, 1L, 1L);
+    client.insertMember(new Member("test.enrich.fixture", testUserId, Role.OWNER, MembershipState.ACTIVE, null, null, Instant.ofEpochMilli(1L)));
+
+    try {
+      List<Member> members = service.listMembers("test.enrich.fixture");
+
+      assertEquals(members.size(), 1);
+      assertEquals(members.getFirst().user().userId(), testUserId);
+      assertEquals(members.getFirst().user().email(), "test@lattejava.org");
+      assertEquals(members.getFirst().user().username(), "OrdinaryUser");
+    } finally {
+      client.deleteGroup("test.enrich.fixture");
+    }
+  }
+
+  @Test
   public void leave_contributor_succeeds() {
     Group g = new Group("test.leave.contrib", "", GroupState.VERIFIED, null, Instant.ofEpochMilli(1L), Instant.ofEpochMilli(1L));
     client.insertGroup(g);
@@ -233,6 +259,24 @@ public class MembershipServiceTest {
       expectThrows(ValidationException.class, () -> service.leave("test.leave.lastowner", ownerUser));
     } finally {
       client.deleteGroup("test.leave.lastowner");
+    }
+  }
+
+  @Test
+  public void leave_pendingInvitee_deletesRow() {
+    // Leaving a group as a PENDING invitee is allowed and equivalent to declining the invitation — the row is
+    // deleted with no last-owner check (PENDING rows are never "the last active owner").
+    Group g = new Group("test.leave.pending", "", GroupState.VERIFIED, null, Instant.ofEpochMilli(1L), Instant.ofEpochMilli(1L));
+    client.insertGroup(g);
+    UUID owner = UUID.fromString("44000001-0000-0000-0000-000000000004");
+    UUID invitee = UUID.fromString("44000001-0000-0000-0000-000000000005");
+    try {
+      client.insertMember(new Member("test.leave.pending", owner, Role.OWNER, MembershipState.ACTIVE, null, null, Instant.ofEpochMilli(1L)));
+      client.insertMember(new Member("test.leave.pending", invitee, Role.CONTRIBUTOR, MembershipState.PENDING, owner, Instant.ofEpochMilli(2L), null));
+      service.leave("test.leave.pending", new User(invitee, "i@x", "I"));
+      assertTrue(client.findMember("test.leave.pending", invitee).isEmpty());
+    } finally {
+      client.deleteGroup("test.leave.pending");
     }
   }
 
