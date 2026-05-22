@@ -112,7 +112,6 @@
             @endif
             <div class="flex gap-2 mt-3.5">
               @template.components.button(label = "Check now", variant = "primary", icon = "refresh", type = "submit")
-              @template.components.button(label = "Cancel verification", variant = "ghost", href = "/app/groups/" + group.name())
             </div>
           </div>
         </div>
