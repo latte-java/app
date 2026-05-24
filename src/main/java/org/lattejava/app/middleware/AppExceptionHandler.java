@@ -9,22 +9,25 @@ import module org.lattejava.http;
 import module org.lattejava.web;
 
 /**
- * Catches exceptions thrown by downstream handlers and renders the shared {@code pages/error.jte} page. Any uncaught
- * {@link Exception} is mapped to a {@code 500}; the parent class's built-in {@link UnauthenticatedException} → 401
- * mapping is preserved.
+ * Catches exceptions thrown by downstream handlers on the browser-facing routes and renders the shared
+ * {@code pages/error.jte} page. Registered against {@link Exception} so it handles every exception: an
+ * {@link HTTPException} renders with its carried status, anything else renders as a {@code 500}.
+ * <p>
+ * This is the outermost handler. The API routes install their own {@link APIExceptionHandler} (which renders JSON)
+ * closer to the routes, so API exceptions are handled there and never reach this HTML renderer.
  *
  * @author Brian Pontarelli
  */
 public class AppExceptionHandler extends ExceptionHandler {
-  private final JTETemplates templates;
-
   public AppExceptionHandler(JTETemplates templates) {
-    super(Map.of(Exception.class, 500));
-    this.templates = templates;
+    super(Map.of(Exception.class, htmlRenderer(templates)));
   }
 
-  @Override
-  protected void writeBody(HTTPRequest req, HTTPResponse res, Exception exception, int status) throws Exception {
-    templates.html("pages/error.jte", req, res, Map.of("status", status));
+  private static ErrorRenderer htmlRenderer(JTETemplates templates) {
+    return (req, res, e) -> {
+      int status = (e instanceof HTTPException he) ? he.status() : 500;
+      res.setStatus(status);
+      templates.html("pages/error.jte", req, res, Map.of("status", status));
+    };
   }
 }

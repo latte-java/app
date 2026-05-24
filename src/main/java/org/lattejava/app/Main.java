@@ -17,8 +17,8 @@ public class Main {
   public static final Path BASE_DIR = Path.of("web");
   public static final List<String> REQUIRED_CONFIG = List.of("d1.accountId", "d1.apiToken", "d1.baseUrl", "d1.databaseId",
       "fusionauth.apiKey", "fusionauth.baseUrl", "fusionauth.clientId", "fusionauth.clientSecret", "fusionauth.issuer",
-      "github.clientId", "github.clientSecret", "r2.accessKeyId", "r2.accountId", "r2.bucket", "r2.secretAccessKey",
-      "web.cookieEncryptionKey");
+      "github.clientId", "github.clientSecret", "s3.accessKeyId", "s3.bucket", "s3.endpoint", "s3.region",
+      "s3.secretAccessKey", "web.cookieEncryptionKey");
   public final Configuration config;
   public final Cookies cookies;
   public final OIDC<User> oidc;
@@ -42,6 +42,7 @@ public class Main {
                                 .issuer(config.get("fusionauth.issuer"))
                                 .clientId(config.get("fusionauth.clientId"))
                                 .clientSecret(config.get("fusionauth.clientSecret"))
+                                .introspectionEndpoint(URI.create(config.get("fusionauth.baseUrl") + "/oauth2/introspect"))
                                 .postLoginPage("/app/")
                                 .postLogout("https://lattejava.org")
                                 .build();
@@ -88,7 +89,7 @@ public class Main {
               .prefix("/groups", groupsRoute -> {
                 GroupController groups = new GroupController(oidc, templates);
                 MembershipController members = new MembershipController(oidc, templates);
-                GroupSecurity groupSecurity = new GroupSecurity(oidc, Services.groupService(), Services.membershipService());
+                GroupSecurity groupSecurity = new GroupSecurity(oidc);
                 Middleware isActiveMember = groupSecurity.hasRole(Role.OWNER, Role.CONTRIBUTOR);
                 Middleware isOwner = groupSecurity.hasRole(Role.OWNER);
 
@@ -130,6 +131,13 @@ public class Main {
                 });
               })
        )
+       .prefix("/api", api -> {
+         PublishController publish = new PublishController();
+         PublishAuthorizer publishAuthorizer = new PublishAuthorizer();
+         api.install(new APIExceptionHandler())
+            .install(oidc.apiAuthenticated())
+            .post("/v1/publish/{groupName}", publish::publish, JSONBodySupplier.of(PublishRequest.class), oidc.apiAuthorized(publishAuthorizer));
+       })
        .missingHandler(this::missing)
        .start(port);
   }

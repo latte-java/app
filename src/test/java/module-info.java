@@ -15,6 +15,6 @@ module org.lattejava.app.tests {
   opens org.lattejava.app.tests.db to org.testng;
   opens org.lattejava.app.tests.github to org.testng;
   opens org.lattejava.app.tests.middleware to org.testng;
-  opens org.lattejava.app.tests.r2 to org.testng;
+  opens org.lattejava.app.tests.s3 to org.testng;
   opens org.lattejava.app.tests.service to org.testng;
 }

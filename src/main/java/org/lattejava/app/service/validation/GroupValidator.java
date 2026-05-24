@@ -91,6 +91,11 @@ public class GroupValidator {
       }
     }
 
+    if (structureValid && segments.length == 1 && tlds.contains(name)) {
+      errors.addFieldError("name", "[tld]name",
+          "The group name [%s] is a top-level domain (TLD). Short group names cannot be bare TLDs; use a reverse-DNS name such as [%s.yourorg] instead.", name, name);
+    }
+
     if (structureValid && databaseClient.findGroup(name).isPresent()) {
       errors.addFieldError("name", "[duplicate]name", "A group named [%s] already exists.", name);
     }

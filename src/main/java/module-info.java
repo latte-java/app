@@ -21,7 +21,7 @@ module org.lattejava.app {
   exports org.lattejava.app.middleware;
   exports org.lattejava.app.model;
   exports org.lattejava.app.model.view;
-  exports org.lattejava.app.r2;
+  exports org.lattejava.app.s3;
   exports org.lattejava.app.security;
   exports org.lattejava.app.service;
   exports org.lattejava.app.service.dns;

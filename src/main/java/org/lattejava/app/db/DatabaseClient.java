@@ -133,6 +133,29 @@ public class DatabaseClient {
     return Optional.of(rowToMember(rows.getFirst()));
   }
 
+  /**
+   * Returns the most specific (longest-named) registered group among {@code candidates}, or empty if none of them is
+   * registered. Used to find the group that owns an artifact namespace.
+   *
+   * @param candidates The candidate group names (the namespace itself plus its ancestors).
+   * @return The owning group, or empty.
+   */
+  public Optional<Group> findOwningGroup(List<String> candidates) {
+    if (candidates.isEmpty()) {
+      return Optional.empty();
+    }
+    String placeholders = String.join(",", Collections.nCopies(candidates.size(), "?"));
+    D1Response response = query(
+        "SELECT name, description, state, verification_code, created_at, verified_at FROM groups WHERE name IN (" + placeholders + ") ORDER BY LENGTH(name) DESC LIMIT 1",
+        candidates.toArray()
+    );
+    List<Map<String, Object>> rows = response.result().getFirst().results();
+    if (rows.isEmpty()) {
+      return Optional.empty();
+    }
+    return Optional.of(rowToGroup(rows.getFirst()));
+  }
+
   public Optional<GroupVerification> findVerification(String groupName) {
     D1Response response = query(
         "SELECT group_name, started_at, last_checked_at FROM group_verifications WHERE group_name = ?",

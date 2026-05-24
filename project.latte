@@ -20,7 +20,7 @@ project(group: "org.lattejava", name: "app", version: "0.1.0", licenses: ["MIT"]
       dependency(id: "com.inversoft:restify:4.4.0")
       dependency(id: "org.lattejava:http:0.1.5")
       dependency(id: "org.lattejava:jwt:0.1.0")
-      dependency(id: "org.lattejava:web:0.2.0")
+      dependency(id: "org.lattejava:web:0.3.0-{integration}")
     }
     group(name: "test-compile", export: false) {
       dependency(id: "org.testng:testng:7.12.0")
@@ -77,6 +77,22 @@ target(name: "tailwind", description: "Installs Tailwind CSS via npm (if needed)
     exec(["npm", "install", "tailwindcss", "@tailwindcss/cli"])
   }
   exec(["npx", "@tailwindcss/cli", "-i", "src/main/css/app.css", "-o", "web/static/css/app.css", "--watch"])
+}
+
+target(name: "minio", description: "Starts a local MinIO container for S3 testing") {
+  output.infoln("Stopping MinIO Docker container (if exists)")
+  exec("docker rm -f latte-minio", true)
+
+  output.infoln("Starting MinIO Docker container in the background")
+  exec("docker run -d --name latte-minio -p 9000:9000 -p 9001:9001 -e MINIO_ROOT_USER=latte-test -e MINIO_ROOT_PASSWORD=latte-test-secret minio/minio server /data --console-address :9001")
+  Thread.sleep(1000)
+
+  output.infoln("Initializing MinIO")
+  exec("docker exec latte-minio mc alias set local http://localhost:9000 latte-test latte-test-secret")
+  exec("docker exec latte-minio mc mb local/latte-test")
+
+  // Allow anonymous downloads so tests can fetch uploaded objects directly over HTTP to verify them.
+  exec("docker exec latte-minio mc anonymous set download local/latte-test")
 }
 
 private void exec(cmd, boolean ignoreFailure = false) {

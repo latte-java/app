@@ -26,6 +26,7 @@ This project is built with `latte` (the Latte build tool, project file is `proje
 | Run a single test         | `latte test --test=org.lattejava.app.tests.MainTest`                                                          |
 | Run the web server        | `latte run` (boots on `localhost:8080`, main class `org.lattejava.app.Main`)                                  |
 | Tailwind watch            | `latte tailwind` (rebuilds `web/static/css/app.css` from `src/main/css/app.css` on changes to `web/**/*.jte`) |
+| Start MinIO (test S3)     | `latte minio` (runs a local MinIO container on `:9000` and creates the `latte-test` bucket; needed for tests) |
 | Local integration release | `latte int` (publishes to local integration repo)                                                             |
 | Refresh IntelliJ module   | `latte idea`                                                                                                  |
 | Clean                     | `latte clean`                                                                                                 |
@@ -90,24 +91,31 @@ Schema changes are SQL files in `migrations/` numbered `NNNN_description.sql`. W
 
 `MainTest.beforeSuite()` wipes all rows and re-seeds the `org.lattejava` group + an `OWNER` membership for the FA test user.
 
-## Storage (R2)
+## Storage (S3-compatible)
 
-`GroupService.delete` checks the configured Cloudflare R2 bucket for any objects under the group's prefix before allowing the delete. Each developer needs a Cloudflare R2 bucket and an API token with read access.
+Artifact storage is any S3-compatible store, configured through `s3.*` properties (see `org.lattejava.app.s3`). Production uses Cloudflare R2; **tests use a local MinIO** so no real cloud bucket is needed to run the suite. `GroupService.delete` checks the bucket for objects under a group's prefix before allowing a delete, and the publish API mints presigned `PUT` URLs against the same store.
 
-### One-time setup
+Config keys (`~/.config/latte/app/config.properties` for dev/prod):
 
-1. Create an R2 bucket (Cloudflare dashboard → R2 → Create bucket). Any name works.
-2. Create an R2 API token (R2 → Manage R2 API Tokens → Create) with **Object Read** permission for that bucket. Save the access key ID and secret.
-3. Add to `~/.config/latte/app/config.properties`:
+```properties
+s3.endpoint=https://<accountId>.r2.cloudflarestorage.com   # or http://localhost:9000 for MinIO
+s3.region=auto                                             # "auto" for R2; "us-east-1" for MinIO/AWS
+s3.bucket=<your bucket name>
+s3.accessKeyId=<access key id>
+s3.secretAccessKey=<secret access key>
+```
 
-   ```properties
-   r2.accountId=<your account id>
-   r2.bucket=<your bucket name>
-   r2.accessKeyId=<r2 access key id>
-   r2.secretAccessKey=<r2 secret access key>
-   ```
+`S3HttpClient` parses the scheme and host from `s3.endpoint` and uses path-style addressing (`<endpoint>/<bucket>/<key>`), which works for R2, MinIO, and AWS.
 
-The R2 endpoint is `https://<accountId>.r2.cloudflarestorage.com`; no extra config needed. Tests create groups, attempt to delete them, and trust the bucket is empty for those test fixture names — fixture names use the `test.delete.*` prefix.
+### Tests + S3 (MinIO)
+
+`src/test/resources/config.properties` ships MinIO `s3.*` values (endpoint `http://localhost:9000`, region `us-east-1`, bucket `latte-test`, key/secret `latte-test`/`latte-test-secret`), so the suite runs against a local MinIO. Start it with this project's own target (each project is self-contained), which also creates the `latte-test` bucket:
+
+```
+latte minio
+```
+
+S3-touching tests (`S3HttpClientTest`, `GroupService` delete checks, and the full `PublishUploadTest` round trip) then talk to MinIO. **Caveat:** these read the same layered config as everything else, so if your `~/.config/latte/app/config.properties` defines `s3.*` it overrides the committed MinIO values — leave `s3.*` out of your personal config (or point it at MinIO) when running tests. Group/delete fixtures use the `test.delete.*` prefix; the upload test uses a unique `org/lattejava/upload-test-*` key and cleans up after itself.
 
 ## Architecture
 

@@ -189,6 +189,18 @@ public class GroupValidatorTest {
   }
 
   @Test
+  public void rejectsBareTld() {
+    Errors errors = validator.validate(group("com"));
+    assertFalse(errors.empty());
+    assertNotNull(errors.getFieldError("name", "[tld]name"));
+  }
+
+  @Test
+  public void acceptsNonTldShortName() {
+    assertTrue(validator.validate(group("notatld")).empty());
+  }
+
+  @Test
   public void validReverseDNS() {
     assertTrue(validator.validate(group("org.example")).empty());
   }

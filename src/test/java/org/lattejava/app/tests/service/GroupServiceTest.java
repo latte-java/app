@@ -10,7 +10,7 @@ import module org.lattejava.app;
 import java.util.Optional;
 
 import org.lattejava.app.model.Member;
-import org.lattejava.app.r2.R2Client;
+import org.lattejava.app.s3.S3Client;
 import org.lattejava.web.*;
 import org.testng.annotations.*;
 
@@ -31,14 +31,14 @@ public class GroupServiceTest {
   public void beforeClass() {
     config = new Configuration(
         List.of("d1.accountId", "d1.apiToken", "d1.baseUrl", "d1.databaseId",
-            "r2.accessKeyId", "r2.accountId", "r2.bucket", "r2.secretAccessKey"),
+            "s3.accessKeyId", "s3.bucket", "s3.endpoint", "s3.region", "s3.secretAccessKey"),
         Path.of(System.getProperty("user.home"), ".config", "latte", "app", "config.properties"),
         Path.of("src/test/resources/config.properties")
     );
     client = new DatabaseClient(config);
     TLDList tlds = new TLDList(Set.of("org", "com", "io", "dev", "net"));
     validator = new GroupValidator(client, tlds);
-    service = new GroupService(config, validator, new org.lattejava.app.r2.R2HttpClient(config));
+    service = new GroupService(config, validator, new org.lattejava.app.s3.S3HttpClient(config));
   }
 
   @Test
@@ -110,8 +110,16 @@ public class GroupServiceTest {
     // Role-based authorization is enforced by GroupSecurity middleware at the route layer, not by GroupService.
     Group g = new Group("test.delete.hasartifacts", "", GroupState.VERIFIED, null, Instant.ofEpochMilli(1L), Instant.ofEpochMilli(1L));
     client.insertGroup(g);
-    R2Client fakeR2 = _ -> false; // not empty
-    GroupService localService = new GroupService(config, validator, fakeR2);
+    S3Client fakeS3 = new S3Client() {
+      public boolean isPrefixEmpty(String prefix) {
+        return false; // not empty
+      }
+
+      public String presignPut(String key, Duration expiry) {
+        throw new UnsupportedOperationException("not used in this test");
+      }
+    };
+    GroupService localService = new GroupService(config, validator, fakeS3);
     try {
       expectThrows(ValidationException.class, () -> localService.delete(g));
     } finally {
@@ -123,8 +131,16 @@ public class GroupServiceTest {
   public void delete_emptyBucket_succeeds() {
     Group g = new Group("test.delete.empty", "", GroupState.VERIFIED, null, Instant.ofEpochMilli(1L), Instant.ofEpochMilli(1L));
     client.insertGroup(g);
-    R2Client fakeR2 = _ -> true; // empty
-    GroupService localService = new GroupService(config, validator, fakeR2);
+    S3Client fakeS3 = new S3Client() {
+      public boolean isPrefixEmpty(String prefix) {
+        return true; // empty
+      }
+
+      public String presignPut(String key, Duration expiry) {
+        throw new UnsupportedOperationException("not used in this test");
+      }
+    };
+    GroupService localService = new GroupService(config, validator, fakeS3);
     try {
       localService.delete(g);
       assertFalse(client.findGroup("test.delete.empty").isPresent());
@@ -250,6 +266,39 @@ public class GroupServiceTest {
       assertEquals(client.findGroup("io.github.updatedesc").orElseThrow().description(), "updated value");
     } finally {
       client.deleteGroup("io.github.updatedesc");
+    }
+  }
+
+  @Test
+  public void findOwningGroup_shortNameExactMatch() {
+    Group shortGroup = new Group("mylibtest", "", GroupState.VERIFIED, null, Instant.ofEpochMilli(1714867200000L), Instant.ofEpochMilli(1714867200000L));
+    client.insertGroup(shortGroup);
+    try {
+      assertEquals(service.findOwningGroup("mylibtest").map(Group::name).orElse(null), "mylibtest");
+      assertTrue(service.findOwningGroup("unregisteredshortname").isEmpty());
+    } finally {
+      client.deleteGroup("mylibtest");
+    }
+  }
+
+  @Test
+  public void findOwningGroup_picksMostSpecificRegisteredAncestor() {
+    Group parent = new Group("com.owntest", "", GroupState.VERIFIED, null, Instant.ofEpochMilli(1714867200000L), Instant.ofEpochMilli(1714867200000L));
+    Group child = new Group("com.owntest.child", "", GroupState.VERIFIED, null, Instant.ofEpochMilli(1714867200000L), Instant.ofEpochMilli(1714867200000L));
+    client.insertGroup(parent);
+    client.insertGroup(child);
+    try {
+      // Exact match.
+      assertEquals(service.findOwningGroup("com.owntest").map(Group::name).orElse(null), "com.owntest");
+      // Nested namespace under the more-specific child resolves to the child, not the parent.
+      assertEquals(service.findOwningGroup("com.owntest.child.artifact").map(Group::name).orElse(null), "com.owntest.child");
+      // Namespace under the parent (no more-specific group) resolves to the parent.
+      assertEquals(service.findOwningGroup("com.owntest.other.thing").map(Group::name).orElse(null), "com.owntest");
+      // No registered owner (the bare TLD "com" is never a candidate).
+      assertTrue(service.findOwningGroup("net.unregistered.thing").isEmpty());
+    } finally {
+      client.deleteGroup("com.owntest.child");
+      client.deleteGroup("com.owntest");
     }
   }
 

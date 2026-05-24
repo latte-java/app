@@ -12,8 +12,7 @@ import org.lattejava.app.model.Group;
 import org.lattejava.app.model.Member;
 import org.lattejava.app.model.Role;
 import org.lattejava.app.model.User;
-import org.lattejava.app.service.GroupService;
-import org.lattejava.app.service.MembershipService;
+import org.lattejava.app.service.*;
 
 /**
  * The group security middleware. Installed once on the {@code /app/groups} prefix so every group-scoped route under
@@ -57,10 +56,10 @@ public class GroupSecurity implements Middleware {
   private final MembershipService membershipService;
   private final OIDC<User> oidc;
 
-  public GroupSecurity(OIDC<User> oidc, GroupService groupService, MembershipService membershipService) {
+  public GroupSecurity(OIDC<User> oidc) {
     this.oidc = oidc;
-    this.groupService = groupService;
-    this.membershipService = membershipService;
+    this.groupService = Services.groupService();
+    this.membershipService = Services.membershipService();
   }
 
   @Override

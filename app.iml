@@ -29,99 +29,99 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/io/fusionauth/fusionauth-java-client/1.65.0/fusionauth-java-client-1.65.0.jar!/" />
+          <root url="jar://$USER_HOME$/.m2/repository/io/fusionauth/fusionauth-java-client/1.65.0/fusionauth-java-client-1.65.0.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/io/fusionauth/fusionauth-java-client/1.65.0/fusionauth-java-client-1.65.0-sources.jar!/" />
+          <root url="jar://$USER_HOME$/.m2/repository/io/fusionauth/fusionauth-java-client/1.65.0/fusionauth-java-client-1.65.0-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/com/inversoft/restify/4.4.0/restify-4.4.0.jar!/" />
+          <root url="jar://$USER_HOME$/.m2/repository/com/inversoft/restify/4.4.0/restify-4.4.0.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/com/inversoft/restify/4.4.0/restify-4.4.0-sources.jar!/" />
+          <root url="jar://$USER_HOME$/.m2/repository/com/inversoft/restify/4.4.0/restify-4.4.0-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$USER_HOME$/.cache/latte/org/lattejava/web/0.2.0-{integration}/web-0.2.0-{integration}.jar!/" />
+          <root url="jar://$USER_HOME$/.cache/latte/org/lattejava/web/0.3.0-{integration}/web-0.3.0-{integration}.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$USER_HOME$/.cache/latte/org/lattejava/web/0.2.0-{integration}/web-0.2.0-{integration}-src.jar!/" />
+          <root url="jar://$USER_HOME$/.cache/latte/org/lattejava/web/0.3.0-{integration}/web-0.3.0-{integration}-src.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/core/jackson-databind/2.21.1/jackson-databind-2.21.1.jar!/" />
+          <root url="jar://$USER_HOME$/.m2/repository/com/fasterxml/jackson/core/jackson-databind/2.21.1/jackson-databind-2.21.1.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/core/jackson-databind/2.21.1/jackson-databind-2.21.1-sources.jar!/" />
+          <root url="jar://$USER_HOME$/.m2/repository/com/fasterxml/jackson/core/jackson-databind/2.21.1/jackson-databind-2.21.1-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/core/jackson-annotations/2.21/jackson-annotations-2.21.jar!/" />
+          <root url="jar://$USER_HOME$/.m2/repository/com/fasterxml/jackson/core/jackson-annotations/2.21/jackson-annotations-2.21.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/core/jackson-annotations/2.21/jackson-annotations-2.21-sources.jar!/" />
+          <root url="jar://$USER_HOME$/.m2/repository/com/fasterxml/jackson/core/jackson-annotations/2.21/jackson-annotations-2.21-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/core/jackson-core/2.21.1/jackson-core-2.21.1.jar!/" />
+          <root url="jar://$USER_HOME$/.m2/repository/com/fasterxml/jackson/core/jackson-core/2.21.1/jackson-core-2.21.1.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/core/jackson-core/2.21.1/jackson-core-2.21.1-sources.jar!/" />
+          <root url="jar://$USER_HOME$/.m2/repository/com/fasterxml/jackson/core/jackson-core/2.21.1/jackson-core-2.21.1-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/gg/jte/jte/3.2.1/jte-3.2.1.jar!/" />
+          <root url="jar://$USER_HOME$/.m2/repository/gg/jte/jte/3.2.1/jte-3.2.1.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/gg/jte/jte/3.2.1/jte-3.2.1-sources.jar!/" />
+          <root url="jar://$USER_HOME$/.m2/repository/gg/jte/jte/3.2.1/jte-3.2.1-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/gg/jte/jte-runtime/3.2.1/jte-runtime-3.2.1.jar!/" />
+          <root url="jar://$USER_HOME$/.m2/repository/gg/jte/jte-runtime/3.2.1/jte-runtime-3.2.1.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/gg/jte/jte-runtime/3.2.1/jte-runtime-3.2.1-sources.jar!/" />
+          <root url="jar://$USER_HOME$/.m2/repository/gg/jte/jte-runtime/3.2.1/jte-runtime-3.2.1-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$USER_HOME$/.cache/latte/org/lattejava/http/0.1.4/http-0.1.4.jar!/" />
+          <root url="jar://$USER_HOME$/.cache/latte/org/lattejava/http/0.1.5/http-0.1.5.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$USER_HOME$/.cache/latte/org/lattejava/http/0.1.4/http-0.1.4-src.jar!/" />
+          <root url="jar://$USER_HOME$/.cache/latte/org/lattejava/http/0.1.5/http-0.1.5-src.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
@@ -139,79 +139,80 @@
     <orderEntry type="module-library" scope="TEST">
       <library>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/testng/testng/7.12.0/testng-7.12.0.jar!/" />
+          <root url="jar://$USER_HOME$/.m2/repository/org/testng/testng/7.12.0/testng-7.12.0.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/testng/testng/7.12.0/testng-7.12.0-sources.jar!/" />
+          <root url="jar://$USER_HOME$/.m2/repository/org/testng/testng/7.12.0/testng-7.12.0-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="module-library" scope="TEST">
       <library>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/slf4j/slf4j-api/2.0.16/slf4j-api-2.0.16.jar!/" />
+          <root url="jar://$USER_HOME$/.m2/repository/org/slf4j/slf4j-api/2.0.16/slf4j-api-2.0.16.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/slf4j/slf4j-api/2.0.16/slf4j-api-2.0.16-sources.jar!/" />
+          <root url="jar://$USER_HOME$/.m2/repository/org/slf4j/slf4j-api/2.0.16/slf4j-api-2.0.16-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="module-library" scope="TEST">
       <library>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jcommander/jcommander/1.83/jcommander-1.83.jar!/" />
+          <root url="jar://$USER_HOME$/.m2/repository/org/jcommander/jcommander/1.83/jcommander-1.83.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jcommander/jcommander/1.83/jcommander-1.83-sources.jar!/" />
+          <root url="jar://$USER_HOME$/.m2/repository/org/jcommander/jcommander/1.83/jcommander-1.83-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="module-library" scope="TEST">
       <library>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/webjars/jquery/3.7.1/jquery-3.7.1.jar!/" />
+          <root url="jar://$USER_HOME$/.m2/repository/org/webjars/jquery/3.7.1/jquery-3.7.1.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/webjars/jquery/3.7.1/jquery-3.7.1-sources.jar!/" />
+          <root url="jar://$USER_HOME$/.m2/repository/org/webjars/jquery/3.7.1/jquery-3.7.1-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="module-library" scope="RUNTIME">
       <library>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/com/inversoft/java-error/2.2.3/java-error-2.2.3.jar!/" />
+          <root url="jar://$USER_HOME$/.m2/repository/com/inversoft/java-error/2.2.3/java-error-2.2.3.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/com/inversoft/java-error/2.2.3/java-error-2.2.3-sources.jar!/" />
+          <root url="jar://$USER_HOME$/.m2/repository/com/inversoft/java-error/2.2.3/java-error-2.2.3-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="module-library" scope="RUNTIME">
       <library>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/com/inversoft/jackson5/3.0.1/jackson5-3.0.1.jar!/" />
+          <root url="jar://$USER_HOME$/.m2/repository/com/inversoft/jackson5/3.0.1/jackson5-3.0.1.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/com/inversoft/jackson5/3.0.1/jackson5-3.0.1-sources.jar!/" />
+          <root url="jar://$USER_HOME$/.m2/repository/com/inversoft/jackson5/3.0.1/jackson5-3.0.1-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="module-library" scope="RUNTIME">
       <library>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/gg/jte/jte-extension-api/3.2.1/jte-extension-api-3.2.1.jar!/" />
+          <root url="jar://$USER_HOME$/.m2/repository/gg/jte/jte-extension-api/3.2.1/jte-extension-api-3.2.1.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/gg/jte/jte-extension-api/3.2.1/jte-extension-api-3.2.1-sources.jar!/" />
+          <root url="jar://$USER_HOME$/.m2/repository/gg/jte/jte-extension-api/3.2.1/jte-extension-api-3.2.1-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
   </component>
 </module>
+

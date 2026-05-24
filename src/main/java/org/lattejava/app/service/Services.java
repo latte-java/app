@@ -8,6 +8,7 @@ import org.lattejava.web.*;
 public class Services {
   private static GroupService groupService;
   private static MembershipService membershipService;
+  private static PublishService publishService;
   private static VerificationService verificationService;
   private static ViewService viewService;
 
@@ -18,6 +19,7 @@ public class Services {
   public static void initialize(Configuration config) {
     groupService = new GroupService(config);
     membershipService = new MembershipService(config);
+    publishService = new PublishService(config);
     verificationService = new VerificationService(config);
     viewService = new ViewService(config);
 
@@ -27,6 +29,10 @@ public class Services {
 
   public static MembershipService membershipService() {
     return membershipService;
+  }
+
+  public static PublishService publishService() {
+    return publishService;
   }
 
   public static void shutdown() {

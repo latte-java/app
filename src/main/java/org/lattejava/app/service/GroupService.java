@@ -8,28 +8,28 @@ import module java.base;
 import module org.lattejava.app;
 
 import org.lattejava.app.model.Member;
-import org.lattejava.app.r2.R2Client;
-import org.lattejava.app.r2.R2HttpClient;
+import org.lattejava.app.s3.S3Client;
+import org.lattejava.app.s3.S3HttpClient;
 import org.lattejava.app.service.validation.*;
 import org.lattejava.web.Configuration;
 
 public class GroupService {
   private static final SecureRandom SECURE_RANDOM = new SecureRandom();
   private final DatabaseClient databaseClient;
-  private final R2Client r2Client;
+  private final S3Client s3Client;
   private final GroupValidator validator;
 
   public GroupService(Configuration config) {
-    this(config, new GroupValidator(config), new R2HttpClient(config));
+    this(config, new GroupValidator(config), new S3HttpClient(config));
   }
 
   /**
    * Test-only constructor. Production code should use the {@link #GroupService(Configuration)}
    * constructor instead.
    */
-  public GroupService(Configuration config, GroupValidator validator, R2Client r2Client) {
+  public GroupService(Configuration config, GroupValidator validator, S3Client s3Client) {
     this.databaseClient = new DatabaseClient(config);
-    this.r2Client = r2Client;
+    this.s3Client = s3Client;
     this.validator = validator;
   }
 
@@ -78,7 +78,7 @@ public class GroupService {
   /**
    * Deletes {@code group}. Authorization is enforced by the route's
    * {@link org.lattejava.app.security.GroupSecurity} middleware (OWNER required); this method only checks the
-   * data-integrity precondition that the group's R2 prefix is empty. On success, the group row is deleted (cascading
+   * data-integrity precondition that the group's S3 prefix is empty. On success, the group row is deleted (cascading
    * to members and verifications).
    *
    * @param group The group to delete.
@@ -87,7 +87,7 @@ public class GroupService {
   public void delete(Group group) {
     Errors errors = new Errors();
     String prefix = group.name().replace('.', '/') + "/";
-    if (!r2Client.isPrefixEmpty(prefix)) {
+    if (!s3Client.isPrefixEmpty(prefix)) {
       errors.addGeneralError("[hasArtifacts]group",
           "The group [%s] has published artifacts and cannot be deleted.", group.name());
     }
@@ -99,6 +99,33 @@ public class GroupService {
 
   public Optional<Group> findGroup(String name) {
     return databaseClient.findGroup(name);
+  }
+
+  /**
+   * Resolves the group that owns {@code namespace} — the most specific registered group that is the namespace itself
+   * or an ancestor of it. For a multi-segment namespace the single-segment TLD prefix (e.g. {@code com} in
+   * {@code com.example.foo}) is excluded from the candidates, since bare TLDs cannot be registered as groups, so the
+   * shallowest candidate is always at least two segments. A single-segment short name is its own sole candidate (it
+   * has no ancestors).
+   *
+   * @param namespace The artifact namespace in dotted form (e.g. {@code com.example.foo}).
+   * @return The owning group, or empty if no registered group covers the namespace.
+   */
+  public Optional<Group> findOwningGroup(String namespace) {
+    if (namespace == null || namespace.isBlank()) {
+      return Optional.empty();
+    }
+    String normalized = namespace.trim().toLowerCase(Locale.ROOT);
+    String[] segments = normalized.split("\\.");
+    List<String> candidates = new ArrayList<>();
+    if (segments.length == 1) {
+      candidates.add(normalized);
+    } else {
+      for (int i = segments.length; i >= 2; i--) {
+        candidates.add(String.join(".", Arrays.copyOfRange(segments, 0, i)));
+      }
+    }
+    return databaseClient.findOwningGroup(candidates);
   }
 
   public List<Group> listForUser(User user) {
