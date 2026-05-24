@@ -1,4 +1,4 @@
-Hi ${(user.firstName)!'there'},
+Hi ${(user.username)!'there'},
 
 You've been invited to join Latte Java. Visit the link below to set a password and finish creating your account.
 

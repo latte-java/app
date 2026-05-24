@@ -1,4 +1,4 @@
-Hi ${(user.firstName)!'there'},
+Hi ${(user.username)!'there'},
 
 You've been invited to join the group ${groupName!''} on Latte Java.
 
