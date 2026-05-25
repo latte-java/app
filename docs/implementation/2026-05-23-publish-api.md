@@ -58,7 +58,7 @@ No `module-info.java` changes are needed: the production packages touched are al
 - Modify: `src/main/java/org/lattejava/app/service/validation/GroupValidator.java`
 - Test: `src/test/java/org/lattejava/app/tests/service/GroupValidatorTest.java`
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Add these two methods to `GroupValidatorTest` (its `validator` is built with `TLDList(Set.of("org","com","io","dev","net"))`):
 
@@ -76,12 +76,12 @@ Add these two methods to `GroupValidatorTest` (its `validator` is built with `TL
   }
 ```
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run: `latte test --test=org.lattejava.app.tests.service.GroupValidatorTest`
 Expected: FAIL — `rejectsBareTld` fails because `validate("com")` currently returns no errors (no `[tld]name`).
 
-- [ ] **Step 3: Implement the check**
+- [x] **Step 3: Implement the check**
 
 In `GroupValidator.validate`, immediately after the existing reverse-DNS TLD block (the `if (structureValid && segments.length > 1) { ... [unknownTld]name ... }` block) and before the duplicate check, insert:
 
@@ -92,12 +92,12 @@ In `GroupValidator.validate`, immediately after the existing reverse-DNS TLD blo
     }
 ```
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 Run: `latte test --test=org.lattejava.app.tests.service.GroupValidatorTest`
 Expected: PASS (all methods, including the existing ones).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/main/java/org/lattejava/app/service/validation/GroupValidator.java src/test/java/org/lattejava/app/tests/service/GroupValidatorTest.java
@@ -115,7 +115,7 @@ Resolves the most-specific registered group covering a namespace. `DatabaseClien
 - Modify: `src/main/java/org/lattejava/app/service/GroupService.java`
 - Test: `src/test/java/org/lattejava/app/tests/service/GroupServiceTest.java`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Add to `GroupServiceTest` (it already has `service` and `client`):
 
@@ -142,12 +142,12 @@ Add to `GroupServiceTest` (it already has `service` and `client`):
   }
 ```
 
-- [ ] **Step 2: Run the test to verify it fails**
+- [x] **Step 2: Run the test to verify it fails**
 
 Run: `latte test --test=org.lattejava.app.tests.service.GroupServiceTest`
 Expected: FAIL — compile error: `findOwningGroup` does not exist on `GroupService`.
 
-- [ ] **Step 3: Implement `DatabaseClient.findOwningGroup`**
+- [x] **Step 3: Implement `DatabaseClient.findOwningGroup`**
 
 Add this method to `DatabaseClient`, placed alphabetically between `findMember` and `findVerification`:
 
@@ -176,7 +176,7 @@ Add this method to `DatabaseClient`, placed alphabetically between `findMember` 
   }
 ```
 
-- [ ] **Step 4: Implement `GroupService.findOwningGroup`**
+- [x] **Step 4: Implement `GroupService.findOwningGroup`**
 
 Add this method to `GroupService`, placed alphabetically between `findGroup` and `listForUser`:
 
@@ -207,12 +207,12 @@ Add this method to `GroupService`, placed alphabetically between `findGroup` and
   }
 ```
 
-- [ ] **Step 5: Run the test to verify it passes**
+- [x] **Step 5: Run the test to verify it passes**
 
 Run: `latte test --test=org.lattejava.app.tests.service.GroupServiceTest`
 Expected: PASS.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add src/main/java/org/lattejava/app/db/DatabaseClient.java src/main/java/org/lattejava/app/service/GroupService.java src/test/java/org/lattejava/app/tests/service/GroupServiceTest.java
@@ -229,7 +229,7 @@ git commit -m "Add findOwningGroup resolution to DatabaseClient and GroupService
 - Modify: `src/main/java/org/lattejava/app/r2/R2HttpClient.java`
 - Test: `src/test/java/org/lattejava/app/tests/r2/R2SignerTest.java`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `src/test/java/org/lattejava/app/tests/r2/R2SignerTest.java`:
 
@@ -269,12 +269,12 @@ public class R2SignerTest {
 }
 ```
 
-- [ ] **Step 2: Run the test to verify it fails**
+- [x] **Step 2: Run the test to verify it fails**
 
 Run: `latte test --test=org.lattejava.app.tests.r2.R2SignerTest`
 Expected: FAIL — compile error: `R2Signer.presignedURL` does not exist.
 
-- [ ] **Step 3: Add `R2Signer.presignedURL`**
+- [x] **Step 3: Add `R2Signer.presignedURL`**
 
 In `R2Signer`, add this static method between `formatAmzDate` and `uriEncode` (it reuses the existing private `hmac` and `sha256Hex`):
 
@@ -330,7 +330,7 @@ In `R2Signer`, add this static method between `formatAmzDate` and `uriEncode` (i
   }
 ```
 
-- [ ] **Step 4: Add `presignPut` to the `R2Client` interface**
+- [x] **Step 4: Add `presignPut` to the `R2Client` interface**
 
 In `R2Client.java`, add the `java.base` module import (for `Duration`) under the package declaration, then add the method to the interface:
 
@@ -352,7 +352,7 @@ import module java.base;
   String presignPut(String key, Duration expiry);
 ```
 
-- [ ] **Step 5: Implement `R2HttpClient.presignPut`**
+- [x] **Step 5: Implement `R2HttpClient.presignPut`**
 
 In `R2HttpClient`, add this method (it reuses the existing `host`, `bucket`, `accessKeyId`, `secretAccessKey` fields):
 
@@ -364,14 +364,14 @@ In `R2HttpClient`, add this method (it reuses the existing `host`, `bucket`, `ac
   }
 ```
 
-- [ ] **Step 6: Run the test to verify it passes**
+- [x] **Step 6: Run the test to verify it passes**
 
 Run: `latte test --test=org.lattejava.app.tests.r2.R2SignerTest`
 Expected: PASS.
 
 > Real-S3-backend verification of these URLs (MinIO) is deferred per the spec; this unit test covers structure and signing determinism only.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add src/main/java/org/lattejava/app/r2/R2Signer.java src/main/java/org/lattejava/app/r2/R2Client.java src/main/java/org/lattejava/app/r2/R2HttpClient.java src/test/java/org/lattejava/app/tests/r2/R2SignerTest.java
@@ -388,7 +388,7 @@ git commit -m "Add query-string presigned PUT URL generation to R2"
 
 No dedicated test — these are plain carriers exercised by Tasks 5 and 9.
 
-- [ ] **Step 1: Create `PublishRequest`**
+- [x] **Step 1: Create `PublishRequest`**
 
 ```java
 /*
@@ -406,7 +406,7 @@ public record PublishRequest(String fileName) {
 }
 ```
 
-- [ ] **Step 2: Create `PublishResponse`**
+- [x] **Step 2: Create `PublishResponse`**
 
 ```java
 /*
@@ -424,7 +424,7 @@ public record PublishResponse(String url) {
 }
 ```
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add src/main/java/org/lattejava/app/model/PublishRequest.java src/main/java/org/lattejava/app/model/PublishResponse.java
@@ -441,7 +441,7 @@ Validates the body and that the requested key is a clean key within the group's 
 - Create: `src/main/java/org/lattejava/app/service/validation/PublishValidator.java`
 - Test: `src/test/java/org/lattejava/app/tests/service/PublishValidatorTest.java`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `src/test/java/org/lattejava/app/tests/service/PublishValidatorTest.java`:
 
@@ -492,12 +492,12 @@ public class PublishValidatorTest {
 }
 ```
 
-- [ ] **Step 2: Run the test to verify it fails**
+- [x] **Step 2: Run the test to verify it fails**
 
 Run: `latte test --test=org.lattejava.app.tests.service.PublishValidatorTest`
 Expected: FAIL — compile error: `PublishValidator` does not exist.
 
-- [ ] **Step 3: Implement `PublishValidator`**
+- [x] **Step 3: Implement `PublishValidator`**
 
 ```java
 /*
@@ -546,12 +546,12 @@ public class PublishValidator {
 }
 ```
 
-- [ ] **Step 4: Run the test to verify it passes**
+- [x] **Step 4: Run the test to verify it passes**
 
 Run: `latte test --test=org.lattejava.app.tests.service.PublishValidatorTest`
 Expected: PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/main/java/org/lattejava/app/service/validation/PublishValidator.java src/test/java/org/lattejava/app/tests/service/PublishValidatorTest.java
@@ -568,7 +568,7 @@ git commit -m "Add PublishValidator for body and key validation"
 
 No dedicated test — covered end-to-end by Task 9 and unit-covered via `PublishValidator` (Task 5).
 
-- [ ] **Step 1: Create `PublishService`**
+- [x] **Step 1: Create `PublishService`**
 
 ```java
 /*
@@ -622,7 +622,7 @@ public class PublishService {
 }
 ```
 
-- [ ] **Step 2: Register `PublishService` in `Services`**
+- [x] **Step 2: Register `PublishService` in `Services`**
 
 In `Services.java`: add the field (alphabetical), the accessor (alphabetical), and the `initialize` line. The full file becomes:
 
@@ -678,12 +678,12 @@ public class Services {
 }
 ```
 
-- [ ] **Step 3: Build to verify it compiles**
+- [x] **Step 3: Build to verify it compiles**
 
 Run: `latte build`
 Expected: BUILD succeeds (no test yet; compilation only).
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add src/main/java/org/lattejava/app/service/PublishService.java src/main/java/org/lattejava/app/service/Services.java
@@ -701,7 +701,7 @@ The `APIAuthorizer` decision: resolve the owning group, require VERIFIED + ACTIV
 
 No dedicated unit test (fabricating an `HTTPRequest` + decoded `JWT` is awkward); its decision branches are covered by the end-to-end 403 cases in Task 9, and its owning-group resolution by Task 2.
 
-- [ ] **Step 1: Create `PublishAuthorizer`**
+- [x] **Step 1: Create `PublishAuthorizer`**
 
 ```java
 /*
@@ -768,12 +768,12 @@ public class PublishAuthorizer implements APIAuthorizer {
 }
 ```
 
-- [ ] **Step 2: Build to verify it compiles**
+- [x] **Step 2: Build to verify it compiles**
 
 Run: `latte build`
 Expected: BUILD succeeds.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add src/main/java/org/lattejava/app/security/PublishAuthorizer.java
@@ -791,7 +791,7 @@ Parses the JSON body, calls `PublishService`, and writes JSON. Maps `ValidationE
 
 End-to-end coverage is in Task 9.
 
-- [ ] **Step 1: Create `PublishController`**
+- [x] **Step 1: Create `PublishController`**
 
 ```java
 /*
@@ -875,12 +875,12 @@ public class PublishController {
 }
 ```
 
-- [ ] **Step 2: Build to verify it compiles**
+- [x] **Step 2: Build to verify it compiles**
 
 Run: `latte build`
 Expected: BUILD succeeds.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add src/main/java/org/lattejava/app/controller/PublishController.java
@@ -895,7 +895,7 @@ git commit -m "Add PublishController for the publish endpoint"
 - Modify: `src/main/java/org/lattejava/app/Main.java`
 - Test: `src/test/java/org/lattejava/app/tests/PublishControllerTest.java`
 
-- [ ] **Step 1: Write the failing end-to-end test**
+- [x] **Step 1: Write the failing end-to-end test**
 
 Create `src/test/java/org/lattejava/app/tests/PublishControllerTest.java`:
 
@@ -1012,12 +1012,12 @@ public class PublishControllerTest extends BaseTest {
 }
 ```
 
-- [ ] **Step 2: Run the test to verify it fails**
+- [x] **Step 2: Run the test to verify it fails**
 
 Run: `latte test --test=org.lattejava.app.tests.PublishControllerTest`
 Expected: FAIL — the route does not exist yet, so requests return 404 (or `apiAuthenticated()` is not installed). Status assertions fail.
 
-- [ ] **Step 3: Set the introspection endpoint on the `OIDCConfig`**
+- [x] **Step 3: Set the introspection endpoint on the `OIDCConfig`**
 
 In `Main`'s constructor, add the `introspectionEndpoint(...)` call to the builder chain (FusionAuth does not advertise it via discovery):
 
@@ -1032,7 +1032,7 @@ In `Main`'s constructor, add the `introspectionEndpoint(...)` call to the builde
                                 .build();
 ```
 
-- [ ] **Step 4: Register the route**
+- [x] **Step 4: Register the route**
 
 In `Main.main()`, add a new top-level `/api` prefix block immediately after the `.prefix("/app", …)` block and before `.missingHandler(this::missing)`:
 
@@ -1048,12 +1048,12 @@ In `Main.main()`, add a new top-level `/api` prefix block immediately after the 
 
 `PublishController` and `PublishAuthorizer` resolve their dependencies from `Services`, which `Main.main()` has already initialized via `Services.initialize(config)` at the top of the method. The `org.lattejava.app.controller.*` import at the top of `Main` already covers `PublishController`; add `import org.lattejava.app.security.PublishAuthorizer;` if `PublishAuthorizer` is not already resolvable (the existing `GroupSecurity` reference is constructed in-line, so confirm the `security` package is imported — add the import if needed).
 
-- [ ] **Step 5: Run the test to verify it passes**
+- [x] **Step 5: Run the test to verify it passes**
 
 Run: `latte test --test=org.lattejava.app.tests.PublishControllerTest`
 Expected: PASS (all nine methods).
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add src/main/java/org/lattejava/app/Main.java src/test/java/org/lattejava/app/tests/PublishControllerTest.java
@@ -1066,12 +1066,12 @@ git commit -m "Wire the publish route and introspection endpoint in Main"
 
 **Files:** none
 
-- [ ] **Step 1: Run the entire test suite**
+- [x] **Step 1: Run the entire test suite**
 
 Run: `latte test`
 Expected: PASS — all existing tests plus the new ones. Confirm nothing regressed (especially `GroupValidatorTest`, `GroupServiceTest`, and the flow tests).
 
-- [ ] **Step 2: If anything fails, fix and re-run before considering the feature complete.**
+- [x] **Step 2: If anything fails, fix and re-run before considering the feature complete.**
 
 No commit unless a fix was required.
 

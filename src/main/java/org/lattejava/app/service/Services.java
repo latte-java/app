@@ -4,7 +4,7 @@
  */
 package org.lattejava.app.service;
 
-import org.lattejava.web.*;
+import module org.lattejava.web;
 
 /**
  * A simple service registry.

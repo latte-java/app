@@ -19,6 +19,7 @@ public class VerificationService {
   private static final String GITHUB_AUTHORIZE_URL = "https://github.com/login/oauth/authorize";
   private static final UUID GITHUB_IDP_ID = UUID.fromString("bef65e1f-0ecf-4c7a-93cb-f58c3ce10b72");
   private static final String GITHUB_SCOPE = "read:user user:email read:org";
+  private static final System.Logger LOG = System.getLogger(VerificationService.class.getName());
   private static final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor(r -> {
     Thread t = new Thread(r, "verification-scanner");
     t.setDaemon(true);
@@ -162,7 +163,7 @@ public class VerificationService {
 
     ClientResponse<IdentityProviderLinkResponse, ?> response = fusionAuth.createUserLink(request);
     if (!response.wasSuccessful()) {
-      System.getLogger(VerificationService.class.toString()).log(System.Logger.Level.ERROR,
+      LOG.log(System.Logger.Level.ERROR,
           "Failed to link GitHub account [" + githubUser.login() + "] to user [" + userId + "]. FA error [" + response.errorResponse + "]");
       return GitHubLinkResult.LINK_FAILED;
     }
