@@ -6,7 +6,7 @@
 
 **Architecture:** A new GET route `/app/groups/{groupName}/members/invite` renders `web/pages/groups/invite.jte` via `MembershipController.inviteForm`. A shared private helper `renderInviteForm` is used by both the GET handler and the existing POST `invite` handler's validation-error branch (self-resubmit pattern, same as `GroupController.create`). The role selector is a new general-purpose `web/components/radio-card.jte` component. The old inline form and its parameter plumbing through `detail.jte` → `members.jte` are removed.
 
-**Tech Stack:** Java 25 (JPMS), JTE 3.x templates, Tailwind v4, TestNG + `org.lattejava.web` `WebTest`/`OIDCTestFixture` integration tests against a running `Main`, FusionAuth on `:9011`, Cloudflare D1.
+**Tech Stack:** Java 25 (JPMS), JTE 3.x templates, Tailwind v4, TestNG + `org.lattejava.web` `WebTest`/`OIDCTestFixture` integration tests against a running `Main`, FusionAuth on `:9013`, Cloudflare D1.
 
 **Spec:** `docs/design/2026-05-19-invite-member-page-design.md`
 
@@ -16,7 +16,7 @@
 
 The suite boots a real `Main` and drives FusionAuth end-to-end. Before running tests:
 
-- FusionAuth must be running locally on `:9011` with the kickstart applied (`cd src/main/fusionauth && docker compose --profile mailcatcher up -d`).
+- FusionAuth must be running locally on `:9013` with the kickstart applied (`cd src/main/fusionauth && docker compose --profile mailcatcher up -d`).
 - Network access to your Cloudflare D1 is required.
 - No dev server may be bound to `:8080` (it makes the whole suite skip).
 

@@ -1300,7 +1300,7 @@ Schema changes are SQL files in `migrations/` numbered `NNNN_description.sql`. W
 
 `latte test` requires:
 
-- FusionAuth running locally on `:9011` (existing requirement).
+- FusionAuth running locally on `:9013` (existing requirement).
 - Network access to your D1 (the test fixture issues `DELETE`/`INSERT` against the real DB before the suite runs).
 
 `MainTest.beforeSuite()` wipes all rows and re-seeds the `org.lattejava` group + an `OWNER` membership for the FA test user.

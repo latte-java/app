@@ -517,7 +517,7 @@ Notes on the implementation:
 Run: `latte test --test=org.lattejava.app.tests.service.MembershipServiceTest`
 Expected: 3/3 PASS.
 
-If a test hangs or fails on FA connectivity, FusionAuth isn't running on `:9011`. Start it (per CLAUDE.md) and retry.
+If a test hangs or fails on FA connectivity, FusionAuth isn't running on `:9013`. Start it (per CLAUDE.md) and retry.
 
 - [ ] **Step 5: Run all tests**
 

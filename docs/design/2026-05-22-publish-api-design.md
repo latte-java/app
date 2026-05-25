@@ -165,8 +165,8 @@ set it explicitly:
 .introspectionEndpoint(URI.create(config.get("fusionauth.baseUrl") + "/oauth2/introspect"))
 ```
 
-(`fusionauth.baseUrl` is already a required config key; in dev it is `http://localhost:9011`, giving
-`http://localhost:9011/oauth2/introspect`. `OIDCConfig.build()` runs `requireSecureURI` on the
+(`fusionauth.baseUrl` is already a required config key; in dev it is `http://localhost:9013`, giving
+`http://localhost:9013/oauth2/introspect`. `OIDCConfig.build()` runs `requireSecureURI` on the
 introspection endpoint, which already permits the localhost-http endpoints discovered today.) Without
 this, `apiAuthenticated()` throws at construction.
 
@@ -330,7 +330,7 @@ no new `requires` is expected), and that `model` is exported as needed.
 ## Testing
 
 TestNG, booting a real `Main` and exercising the running server with `WebTest`, consistent with the
-existing suite. FusionAuth on `:9011` and D1 connectivity are already required.
+existing suite. FusionAuth on `:9013` and D1 connectivity are already required.
 
 **Token validation and refreshing are NOT tested here.** Introspection, reactive refresh, the `401`/
 `503` paths, and the refreshed-token (`X-Access-Token`/`X-Refresh-Token`) response are entirely

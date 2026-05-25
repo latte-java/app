@@ -156,7 +156,7 @@ site:
 - Extend the existing membership-list test to assert the rendered HTML contains
   the FA test user's email and does **not** contain the raw UUID.
 - Fix any `UserService` / OIDC test that asserts on the removed `name` field.
-- Full `latte test` (requires local FusionAuth on `:9011` and D1 network
+- Full `latte test` (requires local FusionAuth on `:9013` and D1 network
   access, per CLAUDE.md).
 
 ## Risks

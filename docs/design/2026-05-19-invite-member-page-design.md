@@ -209,7 +209,7 @@ the invite-specific params are removed.
     field error rather than redirecting.
   - GET the invite page for a nonexistent group redirects 303 to `/app/`
     (`GroupSecurity` short-circuits before the controller runs).
-- Run the full suite with `latte test` (requires FusionAuth on `:9011` and D1 network
+- Run the full suite with `latte test` (requires FusionAuth on `:9013` and D1 network
   access, per project setup).
 
 ## Conventions

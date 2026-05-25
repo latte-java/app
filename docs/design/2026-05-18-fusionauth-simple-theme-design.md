@@ -122,7 +122,7 @@ app's own static server, hardcoded to `http://localhost:8080/static/...` — con
 with the other hardcoded localhost URLs already in the kickstart's email templates, and
 overridden in a production deployment (accepted pre-existing pattern, not new debt).
 
-FusionAuth renders the logo on its hosted login page (origin `http://localhost:9011`) as
+FusionAuth renders the logo on its hosted login page (origin `http://localhost:9013`) as
 `<img id="imgThemeLogo">` driven by a CSS custom property
 (`--img-logo: url('http://localhost:8080/static/images/logo.svg')`). The image is thus a
 **cross-origin subresource** of the FA page. The Latte app applies a strict global

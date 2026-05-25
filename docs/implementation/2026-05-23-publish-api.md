@@ -15,7 +15,7 @@
 ## Prerequisites (for every test step)
 
 Tests boot a real server and hit real backends. Before running any `latte test`:
-- FusionAuth must be running on `:9011` with the kickstart applied.
+- FusionAuth must be running on `:9013` with the kickstart applied.
 - Your D1 must be reachable (the suite wipes + reseeds rows in `@BeforeSuite`).
 - No dev server may be holding port 8081 (the test server's port).
 

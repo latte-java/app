@@ -16,7 +16,7 @@ public class MainTest extends BaseTest {
   public void alreadyLoggedInButRedirectsToOIDC() throws Exception {
     oidc.login("test@lattejava.org", "password", "e9fdb985-9173-4e01-9d73-ac2d60d1dc8e");
     test.get("/login")
-        .assertHeaderStartsWith("Location", "http://localhost:9011/oauth2/authorize");
+        .assertHeaderStartsWith("Location", "http://localhost:9013/oauth2/authorize");
   }
 
   @Test
@@ -77,7 +77,7 @@ public class MainTest extends BaseTest {
         .reset(ResetItem.Request)
         .get("/login")
         .assertStatus(302)
-        .assertHeaderStartsWith("Location", "http://localhost:9011/oauth2/authorize");
+        .assertHeaderStartsWith("Location", "http://localhost:9013/oauth2/authorize");
   }
 
   @Test

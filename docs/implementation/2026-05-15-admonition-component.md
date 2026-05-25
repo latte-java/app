@@ -20,7 +20,7 @@ There is no behavior change in this work — the rendered HTML must be byte-iden
 
 Each task ends by running `latte test` and committing only after it is green. Do not introduce a fabricated test for unchanged output.
 
-Prerequisite: FusionAuth on `:9011` and D1 network access (see `CLAUDE.md`) — the existing suite requires these regardless of this change.
+Prerequisite: FusionAuth on `:9013` and D1 network access (see `CLAUDE.md`) — the existing suite requires these regardless of this change.
 
 ---
 

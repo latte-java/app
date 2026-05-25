@@ -30,7 +30,7 @@ latte minio      # start a local MinIO container for S3 tests
 latte tailwind   # rebuild CSS from src/main/css/app.css on template changes
 ```
 
-Running and testing need some local services and per-developer config (FusionAuth on `:9011`, a
+Running and testing need some local services and per-developer config (FusionAuth on `:9013`, a
 Cloudflare D1 database, an S3 store, and a `~/.config/latte/app/config.properties`). The full,
 step-by-step setup — FusionAuth kickstart, D1 migrations, R2/MinIO, and GitHub OAuth — lives in
 [`CLAUDE.md`](CLAUDE.md).

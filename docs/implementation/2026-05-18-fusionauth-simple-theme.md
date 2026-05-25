@@ -87,7 +87,7 @@ public class FusionAuthThemeTest extends BaseTest {
 
 - [ ] **Step 2: Run the test and verify it fails**
 
-This requires FusionAuth running on `:9011` and the app's prerequisites (D1/R2 config, per `CLAUDE.md`). Run a single test:
+This requires FusionAuth running on `:9013` and the app's prerequisites (D1/R2 config, per `CLAUDE.md`). Run a single test:
 
 ```bash
 latte test --test=org.lattejava.app.tests.FusionAuthThemeTest
@@ -191,7 +191,7 @@ Find the existing tenant patch block (it sets `issuer` and `emailConfiguration`)
 ```json
       "body": {
         "tenant": {
-          "issuer": "http://localhost:9011",
+          "issuer": "http://localhost:9013",
           "emailConfiguration": {
 ```
 
@@ -200,7 +200,7 @@ to:
 ```json
       "body": {
         "tenant": {
-          "issuer": "http://localhost:9011",
+          "issuer": "http://localhost:9013",
           "themeId": "#{themeId}",
           "emailConfiguration": {
 ```
@@ -239,7 +239,7 @@ cd src/main/fusionauth && docker compose --profile mailcatcher down -v && docker
 Wait for FusionAuth to be healthy again before continuing:
 
 ```bash
-until curl -fs -o /dev/null http://localhost:9011/api/status; do sleep 3; done; echo "FusionAuth up"
+until curl -fs -o /dev/null http://localhost:9013/api/status; do sleep 3; done; echo "FusionAuth up"
 ```
 
 Expected: `FusionAuth up` once the container finishes the kickstart (this can take 30–90s).
@@ -276,7 +276,7 @@ git commit -m "fix: <describe the regression fix surfaced by the theme change>"
 ### Task 4: Fix the cross-origin block so the themed logo/favicons actually render
 
 **Why:** Tasks 1–3 leave a true gap. FusionAuth renders the logo on its hosted login page
-(origin `http://localhost:9011`) via `--img-logo: url('http://localhost:8080/static/images/logo.svg')`
+(origin `http://localhost:9013`) via `--img-logo: url('http://localhost:8080/static/images/logo.svg')`
 — a cross-origin subresource. The Latte app's global `SecurityHeaders` emits
 `Cross-Origin-Resource-Policy: same-origin` on every response, so the browser refuses to
 deliver `/static` assets to the cross-origin FA page; the logo (and favicons) silently do

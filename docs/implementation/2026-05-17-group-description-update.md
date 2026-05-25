@@ -14,7 +14,7 @@
 
 ### Prerequisites (read before starting)
 
-- FusionAuth running locally on `:9011` with kickstart applied, and D1 network access — the TestNG suite boots a real server and hits the real DB (see `CLAUDE.md`). Every test task below requires this.
+- FusionAuth running locally on `:9013` with kickstart applied, and D1 network access — the TestNG suite boots a real server and hits the real DB (see `CLAUDE.md`). Every test task below requires this.
 - Build: `latte build`. Full suite: `latte test`. Single test class: `latte test --test=org.lattejava.app.tests.service.GroupValidatorTest`.
 - TestNG has no per-method filter here; `--test=` takes a class. "Run the test" steps below run the whole class and you confirm the named method's result in the output.
 - No new external dependencies → no `project.latte` or `module-info.java` changes.

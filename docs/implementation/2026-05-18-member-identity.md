@@ -6,7 +6,7 @@
 
 **Architecture:** `User` becomes `(userId, email, username)`. `Member` carries a `User` instead of a bare UUID, but keeps a `(…, UUID, …)` convenience constructor and a `userId()` accessor so existing call sites are untouched. `MembershipService.listMembers` enriches members with one batched `FusionAuthClient.searchUsersByIds` call; templates render `member.user()`.
 
-**Tech Stack:** Java 25 (records, JPMS), `latte` build tool, JTE 3.x templates, FusionAuth Java client, Cloudflare D1, TestNG integration tests (require local FusionAuth `:9011` + D1 network access).
+**Tech Stack:** Java 25 (records, JPMS), `latte` build tool, JTE 3.x templates, FusionAuth Java client, Cloudflare D1, TestNG integration tests (require local FusionAuth `:9013` + D1 network access).
 
 **Spec:** `docs/design/2026-05-18-member-identity-design.md`
 
@@ -18,7 +18,7 @@
 
 - [ ] **Confirm environment**
 
-Run: `cd /Users/bpontarelli/dev/latte-java/app && ls src/main/fusionauth && curl -s -o /dev/null -w "%{http_code}" http://localhost:9011`
+Run: `cd /Users/bpontarelli/dev/latte-java/app && ls src/main/fusionauth && curl -s -o /dev/null -w "%{http_code}" http://localhost:9013`
 Expected: directory listing, then `200` (FusionAuth up). If not `200`, start it: `cd src/main/fusionauth && docker compose --profile mailcatcher up -d` and wait until `curl` returns `200`.
 
 - [ ] **Baseline green**

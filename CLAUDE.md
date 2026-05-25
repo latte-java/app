@@ -31,7 +31,7 @@ This project is built with `latte` (the Latte build tool, project file is `proje
 | Refresh IntelliJ module   | `latte idea`                                                                                                  |
 | Clean                     | `latte clean`                                                                                                 |
 
-Tests require FusionAuth running locally on `:9011` with the kickstart applied. Start it with Docker Compose from `src/main/fusionauth/`, using the `mailcatcher` profile:
+Tests require FusionAuth running locally on `:9013` with the kickstart applied. Start it with Docker Compose from `src/main/fusionauth/`, using the `mailcatcher` profile:
 
 ```
 cd src/main/fusionauth && docker compose --profile mailcatcher up -d
@@ -48,7 +48,7 @@ export FUSIONAUTH_APP_GITHUB_CLIENT_ID=<your github oauth client id>
 export FUSIONAUTH_APP_GITHUB_CLIENT_SECRET=<your github oauth client secret>
 ```
 
-Create a GitHub OAuth App at https://github.com/settings/developers with the homepage URL `http://localhost:8080` and the authorization callback `http://localhost:9011/oauth2/callback`. Copy the client ID and secret into the env vars above. If these aren't set the kickstart still applies, but the IDP records empty credentials and GitHub login won't work until you re-apply the kickstart with real values (`docker compose --profile mailcatcher down -v && up -d`).
+Create a GitHub OAuth App at https://github.com/settings/developers with the homepage URL `http://localhost:8080` and the authorization callback `http://localhost:9013/oauth2/callback`. Copy the client ID and secret into the env vars above. If these aren't set the kickstart still applies, but the IDP records empty credentials and GitHub login won't work until you re-apply the kickstart with real values (`docker compose --profile mailcatcher down -v && up -d`).
 
 GitHub-email caveat: `LinkByEmail` resolves an existing FA user by the email returned from GitHub's `/user` endpoint. If your GitHub primary email is set to private, `/user` returns `email: null` and FA rejects the login. Either make your primary email public on GitHub, or change the IDP's `linkingStrategy` to something username-based.
 
@@ -86,7 +86,7 @@ Schema changes are SQL files in `migrations/` numbered `NNNN_description.sql`. W
 
 `latte test` requires:
 
-- FusionAuth running locally on `:9011` (existing requirement).
+- FusionAuth running locally on `:9013` (existing requirement).
 - Network access to your D1 (the test fixture issues `DELETE`/`INSERT` against the real DB before the suite runs).
 
 `MainTest.beforeSuite()` wipes all rows and re-seeds the `org.lattejava` group + an `OWNER` membership for the FA test user.
