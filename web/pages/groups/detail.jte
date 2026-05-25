@@ -40,9 +40,6 @@
     <a class="inline-flex items-center gap-2 px-3.5 py-3 -mb-px border-b-2 text-sm no-underline transition-colors ${activeTab.equals("overview") ? "border-sky-500 text-slate-900 dark:text-slate-100 font-semibold" : "border-transparent text-slate-500 hover:text-slate-900 dark:hover:text-slate-100"}" href="${base}/">
       Overview
     </a>
-<%--    <a class="inline-flex items-center gap-2 px-3.5 py-3 -mb-px border-b-2 text-sm no-underline transition-colors ${activeTab.equals("artifacts") ? "border-sky-500 text-slate-900 dark:text-slate-100 font-semibold" : "border-transparent text-slate-500 hover:text-slate-900 dark:hover:text-slate-100"}" href="${base}/artifacts">--%>
-<%--      Artifacts--%>
-<%--    </a>--%>
     @if(groupView.canManage())
       <a class="inline-flex items-center gap-2 px-3.5 py-3 -mb-px border-b-2 text-sm no-underline transition-colors ${activeTab.equals("members") ? "border-sky-500 text-slate-900 dark:text-slate-100 font-semibold" : "border-transparent text-slate-500 hover:text-slate-900 dark:hover:text-slate-100"}" href="${base}/members/">
         Members
