@@ -16,8 +16,9 @@ public class ViewService {
   private final MembershipService membershipService;
 
   public ViewService(Configuration config) {
-    this.groupService = new GroupService(config);
-    this.membershipService = new MembershipService(config);
+    this.groupService = Services.groupService();
+    this.membershipService = Services.membershipService();
+
     String base = config.get("fusionauth.baseUrl");
     if (base.endsWith("/")) {
       base = base.substring(0, base.length() - 1);
@@ -27,10 +28,9 @@ public class ViewService {
   }
 
   public GroupView buildGroupView(User user, Group group, String activeTab) {
-    Member viewerMembership = membershipService.findMember(group.name(), user.userId())
-        .orElseThrow(() -> new IllegalStateException(
-            "No membership row for user [" + user.userId() + "] in group [" + group.name() + "]"));
-    return new GroupView(buildMainView(user), group, viewerMembership, activeTab);
+    Member member = membershipService.findMember(group.name(), user.userId())
+                                     .orElseThrow(() -> new IllegalStateException("No membership row for user [" + user.userId() + "] in group [" + group.name() + "]"));
+    return new GroupView(buildMainView(user), group, member, activeTab);
   }
 
   public MainView buildMainView(User viewer) {

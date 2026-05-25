@@ -72,7 +72,7 @@ public class MainTest extends BaseTest {
 
   @Test
   public void oidcRedirect() {
-    test.get("/app/dashboard")
+    test.get("/app/")
         .assertRedirect(302, "/login")
         .reset(ResetItem.Request)
         .get("/login")

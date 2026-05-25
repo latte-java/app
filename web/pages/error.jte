@@ -58,12 +58,10 @@
       </p>
 
       <div class="mt-8 flex items-center justify-center gap-3 flex-wrap">
-        <a href="/app/dashboard"
-           class="inline-flex items-center gap-2 rounded-md font-medium whitespace-nowrap transition-colors px-4 py-2 text-sm bg-sky-500 text-white border border-transparent hover:bg-sky-600 shadow-sm no-underline">
+        <a href="/app/" class="inline-flex items-center gap-2 rounded-md font-medium whitespace-nowrap transition-colors px-4 py-2 text-sm bg-sky-500 text-white border border-transparent hover:bg-sky-600 shadow-sm no-underline">
           <span>Back to dashboard</span>
         </a>
-        <a href="/app/groups/"
-           class="inline-flex items-center gap-2 rounded-md font-medium whitespace-nowrap transition-colors px-4 py-2 text-sm bg-transparent text-slate-900 border border-slate-300 hover:bg-slate-100 dark:text-slate-100 dark:border-slate-600 dark:hover:bg-slate-800 no-underline">
+        <a href="/app/groups/" class="inline-flex items-center gap-2 rounded-md font-medium whitespace-nowrap transition-colors px-4 py-2 text-sm bg-transparent text-slate-900 border border-slate-300 hover:bg-slate-100 dark:text-slate-100 dark:border-slate-600 dark:hover:bg-slate-800 no-underline">
           <span>Browse groups</span>
         </a>
       </div>

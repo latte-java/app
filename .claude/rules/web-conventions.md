@@ -58,7 +58,7 @@ Listing pages — pages that show a collection of items — use a trailing `/` i
 | `/app/groups/{name}`              | Group detail                      | no            |
 | `/app/groups/{name}/verify`       | Verify form                       | no            |
 | `/app/groups/{name}/verify/check` | Verify check (POST)               | no            |
-| `/app/dashboard`                  | Dashboard (overview, not listing) | no            |
+| `/app/`                           | Dashboard (overview, not listing) | no            |
 
 ### Why
 

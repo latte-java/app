@@ -39,7 +39,7 @@ public class AppExceptionHandlerTest {
     assertTrue(html.contains("<title>500 · Latte repository</title>"), "page title should include the status code");
 
     // Navigation back to the app.
-    assertTrue(html.contains("href=\"/app/dashboard\""), "Back-to-dashboard link missing");
+    assertTrue(html.contains("href=\"/app/\""), "Back-to-dashboard link missing");
     assertTrue(html.contains("href=\"/app/groups/\""), "Browse-groups link missing");
   }
 
