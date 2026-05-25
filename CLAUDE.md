@@ -121,15 +121,29 @@ S3-touching tests (`S3HttpClientTest`, `GroupService` delete checks, and the ful
 
 ### Wiring (`Main.java`)
 
-`Main` is the composition root and the only place dependencies are constructed. It loads config from `src/test/resources/config.properties`, builds the `OIDCConfig`, creates the `FusionAuthClient`, instantiates services, and registers routes on a `Web` instance from the sibling `org.lattejava.web` module. The dev config file is read at runtime (not test-only despite living under `src/test/resources`); production deploys override that path.
+`Main` is the composition root. It loads layered config (the per-developer `~/.config/latte/app/config.properties` takes precedence over the committed `src/test/resources/config.properties`), builds the `OIDCConfig` — including an explicit `introspectionEndpoint`, since FusionAuth's discovery document does not advertise one — creates the typed `OIDC<User>` (with `UserService::toUser`), the cookie codec, and the `JTETemplates`, calls `Services.initialize(config)`, and registers routes on a `Web` instance from the sibling `org.lattejava.web` module. (`Main` does not create a `FusionAuthClient`; the services that need it construct their own.)
 
-Routes follow a small pattern: `/` redirects to `/app/dashboard`; everything under `/app/*` is gated by `oidc.authenticated()`. Static files come from `web/static` mounted at `/static`.
+Routes split into two trees by authentication model:
+
+- `/` redirects to `/app/` (301). Everything under `/app/*` is the **browser UI**, gated by the OIDC session cookie via `oidc.authenticated()`; `/app/groups/*` additionally installs `GroupSecurity` (membership check) with per-route `hasRole(...)` on owner-only actions.
+- `/api/*` is the **token-authenticated JSON API** — the bearer access token comes from the `Authorization` header (handled by `oidc.apiAuthenticated()`), with per-route authorization via `oidc.apiAuthorized(...)`. The current endpoint is `POST /api/v1/publish/{groupName}` (see *Publish API* below).
+
+Static files come from `web/static` mounted at `/static`.
 
 ### Services
 
-- **`UserService.toUser(JWT)`** — pure JWT → `User` mapping. Used as the OIDC factory (`OIDC.create(oidcConfig, UserService::toUser)`). Email is the primary identifier; there are no usernames.
-- **`GroupService`** — currently a stub that returns an empty list. Plan 02 rewrites it against `DatabaseClient` to query the D1 `groups` and `members` tables.
-- **`ViewService`** — assembles the `View` shell every page is rendered against. It pulls sidebar groups from `GroupService` and bakes in `activeNav`/theme.
+Services are singletons constructed in `Services.initialize(config)`. Validation is never inlined: each service calls a validator in `org.lattejava.app.service.validation` (`GroupValidator`, `MembershipValidator`, `PublishValidator`) and throws `ValidationException`.
+
+- **`UserService.toUser(JWT)`** — pure JWT → `User` mapping, used as the OIDC factory (`OIDC.create(oidcConfig, UserService::toUser)`). Maps `sub` → `userId`, plus `email` and `preferred_username` → `username`. Email is the primary identifier. Note: those two identity claims are **not** in FusionAuth's default access token — the kickstart's `JWTPopulate` lambda injects them (see the FusionAuth section).
+- **`GroupService`** — D1-backed group operations via `DatabaseClient`: create (kind-specific verification state), delete (guarded by an empty-S3-prefix check), lookup, owning-group resolution (`findOwningGroup`, used by the publish API), and description updates.
+- **`MembershipService`** — group memberships (invite / accept / decline / leave / role change / remove), enriching member rows with FusionAuth user data.
+- **`PublishService`** — validates a publish request and returns a presigned S3 `PUT` URL (see *Publish API*).
+- **`VerificationService`** — drives group-ownership verification (DNS TXT challenges and GitHub user/org checks) on a scheduled scan.
+- **`ViewService`** — assembles the `MainView` chrome (sidebar groups, active nav, theme) that every page renders against, plus the per-page `GroupView`.
+
+### Publish API
+
+`POST /api/v1/publish/{groupName}` issues a short-lived presigned S3 `PUT` URL so the sibling `cli` can upload an artifact. `web`'s `apiAuthenticated()` validates the bearer access token (reactively refreshing via an `X-Refresh-Token` header when needed); `PublishAuthorizer` (an `APIAuthorizer` in `org.lattejava.app.security`) resolves the most-specific registered group owning the namespace and requires the caller to be an `ACTIVE` `OWNER`/`CONTRIBUTOR` of that group, which must be `VERIFIED`. `PublishController` (a `BodyHandler` fed by `JSONBodySupplier`) then has `PublishService` validate that the requested key is within the namespace and mint the URL via `S3HttpClient`/`S3Signer`. Errors render as JSON via `APIExceptionHandler` (installed at `/api`); browser routes still render the HTML error page via `AppExceptionHandler`. Full design: `docs/design/2026-05-22-publish-api-design.md`.
 
 ### Domain model (D1-backed)
 
@@ -140,11 +154,11 @@ Groups, memberships, and verifications live in Cloudflare D1 (see "Database (D1)
 - `Member.role` → `Role` (`CONTRIBUTOR` | `OWNER`)
 - `GroupVerification` tracks outstanding DNS TXT challenges (one per pending group).
 
-Records under `org.lattejava.app.model` (`User`, `Group`, `Member`, `MembershipState`, `Role`, `GroupState`, `GroupVerification`, plus stub UI carriers `Artifact`, `View`, `ActivityEntry`, `VerificationChallenge`) are immutable carriers; the templates render them directly. SQL CRUD is on `org.lattejava.app.db.DatabaseClient`.
+Records under `org.lattejava.app.model` — `User`, `Group`, `Member`, `MembershipState`, `Role`, `GroupState`, `GroupVerification`, `InviteRequest`, and the publish API's JSON carriers `PublishRequest`/`PublishResponse` — are immutable carriers; templates render the domain ones directly. View-only models live in `org.lattejava.app.model.view` (`MainView`, `GroupView`, `VerificationView`). (`Artifact` and `ActivityEntry` are placeholder carriers for not-yet-wired artifact/activity UI.) SQL CRUD is on `org.lattejava.app.db.DatabaseClient`.
 
 ### Templates (`web/`)
 
-Server-side rendering uses JTE 3.x. `Main` constructs `JTETemplates(BASE_DIR=web, build)`; handlers call `templates.html("pages/foo.jte", req, res, Map.of(...))`. Layout is `web/layout/main.jte`, which expects a `View` plus `pageTitle`, `activeNav`, `activeGroupId`, and a sidebar group list. Reusable bits live in `web/components/`. Styling is Tailwind v4 via `@tailwindcss/cli`; the compiled output `web/static/css/app.css` is committed-out at runtime by the `tailwind` target.
+Server-side rendering uses JTE 3.x. `Main` constructs `JTETemplates(BASE_DIR=web, build)`; handlers call `templates.html("pages/foo.jte", req, res, Map.of(...))`. Layout is `web/layout/main.jte`, which expects a `MainView` plus `pageTitle`, `activeNav`, `activeGroupId`, and a sidebar group list. Reusable bits live in `web/components/`. Styling is Tailwind v4 via `@tailwindcss/cli`; the compiled output `web/static/css/app.css` is committed-out at runtime by the `tailwind` target.
 
 ### Tests (`src/test/java/`)
 
