@@ -20,11 +20,9 @@ import static org.testng.Assert.*;
  */
 @Test
 public class InviteFlowTest extends BaseTest {
-  private static final String APP_ID = "e9fdb985-9173-4e01-9d73-ac2d60d1dc8e";
-
   @Test
   public void inviteForm_missingGroup_redirectsHome() throws Exception {
-    oidc.login("test@lattejava.org", "password", APP_ID);
+    oidc.login("test@lattejava.org", "password");
     test.get("/app/groups/test.invite.missing/members/invite")
         .assertRedirect(303, "/app/");
   }
@@ -36,7 +34,7 @@ public class InviteFlowTest extends BaseTest {
     insertTestUserAsOwner(name);
     try {
       var string = new StringBodyAsserter();
-      oidc.login("test@lattejava.org", "password", APP_ID);
+      oidc.login("test@lattejava.org", "password");
       test.get("/app/groups/" + name + "/members/invite")
           .assertStatus(200)
           .assertBodyAs(string, s -> s.contains("Invite a member")
@@ -59,7 +57,7 @@ public class InviteFlowTest extends BaseTest {
     insertTestUserAsOwner(name);
     try {
       var string = new StringBodyAsserter();
-      oidc.login("test@lattejava.org", "password", APP_ID);
+      oidc.login("test@lattejava.org", "password");
       test.withForm(Map.of("email", "", "role", "CONTRIBUTOR"))
           .post("/app/groups/" + name + "/members/invite")
           .assertStatus(200)
@@ -77,7 +75,7 @@ public class InviteFlowTest extends BaseTest {
     insertTestUserAsOwner(name);
     String email = "test+invite-page-" + UUID.randomUUID() + "@lattejava.org";
     try {
-      oidc.login("test@lattejava.org", "password", APP_ID);
+      oidc.login("test@lattejava.org", "password");
       test.withForm(Map.of("email", email, "role", "CONTRIBUTOR"))
           .post("/app/groups/" + name + "/members/invite")
           .assertRedirect(303, "/app/groups/" + name + "/members/");
@@ -95,7 +93,7 @@ public class InviteFlowTest extends BaseTest {
   @Test
   public void membersList_inviteButtonLinksToInvitePage() throws Exception {
     var string = new StringBodyAsserter();
-    oidc.login("test@lattejava.org", "password", APP_ID);
+    oidc.login("test@lattejava.org", "password");
     test.get("/app/groups/org.lattejava/members/")
         .assertStatus(200)
         .assertBodyAs(string, s -> s.contains("href=\"/app/groups/org.lattejava/members/invite\"")

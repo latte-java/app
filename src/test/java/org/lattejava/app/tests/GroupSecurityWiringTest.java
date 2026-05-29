@@ -13,10 +13,10 @@ import org.lattejava.app.model.Group;
 import org.lattejava.app.model.Member;
 
 /**
- * Wiring matrix for every protected path under {@code /app/groups}: for each owner-only path, asserts a 303 redirect
- * to {@code /app/} against a missing group, a non-member, and an active CONTRIBUTOR; for each active-member-only path
- * (any role), asserts a 303 against missing/non-member/PENDING and a 200 for an active CONTRIBUTOR; for each
- * member-only path, asserts the same redirect against a missing group and a non-member. This verifies that the correct
+ * Wiring matrix for every protected path under {@code /app/groups}: for each owner-only path, asserts a 303 redirect to
+ * {@code /app/} against a missing group, a non-member, and an active CONTRIBUTOR; for each active-member-only path (any
+ * role), asserts a 303 against missing/non-member/PENDING and a 200 for an active CONTRIBUTOR; for each member-only
+ * path, asserts the same redirect against a missing group and a non-member. This verifies that the correct
  * GroupSecurity middleware is actually attached to each specific route, complementing the middleware-logic tests in
  * {@link GroupSecurityTest}. All denial paths collapse into the same redirect to avoid leaking whether the resource
  * exists or whether the user just lacks a role.
@@ -24,7 +24,6 @@ import org.lattejava.app.model.Member;
  * Unguarded routes (GET /, GET /new, POST /new, POST .../accept, POST .../decline) are intentionally absent.
  */
 public class GroupSecurityWiringTest extends BaseTest {
-  private static final String APP_ID = "e9fdb985-9173-4e01-9d73-ac2d60d1dc8e";
   private static final String CONTRIBUTOR_GROUP = "test.security.wiring.contrib";
   private static final String MISSING_GROUP = "test.security.wiring.missing";
   private static final String NON_MEMBER_GROUP = "test.security.wiring.nonmember";
@@ -40,25 +39,25 @@ public class GroupSecurityWiringTest extends BaseTest {
 
   @Test(dataProvider = "activeMemberOnly")
   public void activeMemberOnly_activeContributor_passes(String method, String suffix) throws Exception {
-    oidc.login("test@lattejava.org", "password", APP_ID);
+    oidc.login("test@lattejava.org", "password");
     request(method, "/app/groups/" + CONTRIBUTOR_GROUP + suffix).assertStatus(200);
   }
 
   @Test(dataProvider = "activeMemberOnly")
   public void activeMemberOnly_missingGroup_redirectsHome(String method, String suffix) throws Exception {
-    oidc.login("test@lattejava.org", "password", APP_ID);
+    oidc.login("test@lattejava.org", "password");
     request(method, "/app/groups/" + MISSING_GROUP + suffix).assertRedirect(303, "/app/");
   }
 
   @Test(dataProvider = "activeMemberOnly")
   public void activeMemberOnly_nonMember_redirectsHome(String method, String suffix) throws Exception {
-    oidc.login("test@lattejava.org", "password", APP_ID);
+    oidc.login("test@lattejava.org", "password");
     request(method, "/app/groups/" + NON_MEMBER_GROUP + suffix).assertRedirect(303, "/app/");
   }
 
   @Test(dataProvider = "activeMemberOnly")
   public void activeMemberOnly_pendingMember_redirectsHome(String method, String suffix) throws Exception {
-    oidc.login("test@lattejava.org", "password", APP_ID);
+    oidc.login("test@lattejava.org", "password");
     request(method, "/app/groups/" + PENDING_GROUP + suffix).assertRedirect(303, "/app/");
   }
 
@@ -73,13 +72,13 @@ public class GroupSecurityWiringTest extends BaseTest {
 
   @Test(dataProvider = "memberOnly")
   public void memberOnly_missingGroup_redirectsHome(String method, String suffix) throws Exception {
-    oidc.login("test@lattejava.org", "password", APP_ID);
+    oidc.login("test@lattejava.org", "password");
     request(method, "/app/groups/" + MISSING_GROUP + suffix).assertRedirect(303, "/app/");
   }
 
   @Test(dataProvider = "memberOnly")
   public void memberOnly_nonMember_redirectsHome(String method, String suffix) throws Exception {
-    oidc.login("test@lattejava.org", "password", APP_ID);
+    oidc.login("test@lattejava.org", "password");
     request(method, "/app/groups/" + NON_MEMBER_GROUP + suffix).assertRedirect(303, "/app/");
   }
 
@@ -104,19 +103,19 @@ public class GroupSecurityWiringTest extends BaseTest {
 
   @Test(dataProvider = "ownerOnly")
   public void ownerOnly_contributor_redirectsHome(String method, String suffix) throws Exception {
-    oidc.login("test@lattejava.org", "password", APP_ID);
+    oidc.login("test@lattejava.org", "password");
     request(method, "/app/groups/" + CONTRIBUTOR_GROUP + suffix).assertRedirect(303, "/app/");
   }
 
   @Test(dataProvider = "ownerOnly")
   public void ownerOnly_missingGroup_redirectsHome(String method, String suffix) throws Exception {
-    oidc.login("test@lattejava.org", "password", APP_ID);
+    oidc.login("test@lattejava.org", "password");
     request(method, "/app/groups/" + MISSING_GROUP + suffix).assertRedirect(303, "/app/");
   }
 
   @Test(dataProvider = "ownerOnly")
   public void ownerOnly_nonMember_redirectsHome(String method, String suffix) throws Exception {
-    oidc.login("test@lattejava.org", "password", APP_ID);
+    oidc.login("test@lattejava.org", "password");
     request(method, "/app/groups/" + NON_MEMBER_GROUP + suffix).assertRedirect(303, "/app/");
   }
 

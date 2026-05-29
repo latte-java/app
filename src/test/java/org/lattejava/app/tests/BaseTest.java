@@ -19,23 +19,9 @@ public abstract class BaseTest {
   public static DatabaseClient db;
   public static Main main;
   public static OIDCTestFixture oidc;
-  public static UUID testUserId;
+  public static OIDCTestFixture oidcForAPI;
   public static WebTest test = new WebTest(8081);
-
-  /**
-   * Inserts the FA test user as an ACTIVE OWNER of the given group. Use this in flow tests to satisfy the
-   * {@link org.lattejava.app.security.GroupSecurity} middleware on owner-only routes (settings, verify, delete,
-   * invite, role/remove).
-   */
-  @Test(enabled = false)
-  public static void insertTestUserAsOwner(String groupName) {
-    db.insertMember(new Member(groupName, testUserId, Role.OWNER, MembershipState.ACTIVE, null, null, Instant.now()));
-  }
-
-  @AfterMethod
-  public void afterMethod() {
-    oidc.logout();
-  }
+  public static UUID testUserId;
 
   @AfterSuite
   public static void afterSuite() {
@@ -47,9 +33,20 @@ public abstract class BaseTest {
     main = new Main(8081);
     main.main();
     db = new DatabaseClient(main.config);
-    oidc = new OIDCTestFixture(test, main.oidcConfig);
+    oidc = new OIDCTestFixture(test, main.ssrConfig);
+    oidcForAPI = new OIDCTestFixture(test, main.apiConfig);
 
     resetAndSeedDatabase();
+  }
+
+  /**
+   * Inserts the FA test user as an ACTIVE OWNER of the given group. Use this in flow tests to satisfy the
+   * {@link org.lattejava.app.security.GroupSecurity} middleware on owner-only routes (settings, verify, delete, invite,
+   * role/remove).
+   */
+  @Test(enabled = false)
+  public static void insertTestUserAsOwner(String groupName) {
+    db.insertMember(new Member(groupName, testUserId, Role.OWNER, MembershipState.ACTIVE, null, null, Instant.now()));
   }
 
   private static void resetAndSeedDatabase() {
@@ -92,5 +89,10 @@ public abstract class BaseTest {
         null,
         1714867200000L
     );
+  }
+
+  @AfterMethod
+  public void afterMethod() {
+    oidc.logout();
   }
 }

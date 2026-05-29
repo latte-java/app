@@ -15,14 +15,12 @@ import org.lattejava.web.oidc.Tokens;
 
 @Test
 public class PublishControllerTest extends BaseTest {
-  private static final String APP_ID = "e9fdb985-9173-4e01-9d73-ac2d60d1dc8e";
-
   private static Group verifiedGroup(String name) {
     return new Group(name, "", GroupState.VERIFIED, null, Instant.ofEpochMilli(1714867200000L), Instant.ofEpochMilli(1714867200000L));
   }
 
   private WebTestAsserter publish(String groupName, String body) throws Exception {
-    Tokens tokens = oidc.login("test@lattejava.org", "password", APP_ID);
+    Tokens tokens = oidcForAPI.login("test@lattejava.org", "password", "http://localhost:8888/callback");
     test.clearRequestState();
     test.clearCookies();
     return test.withHeader("Authorization", "Bearer " + tokens.accessToken())

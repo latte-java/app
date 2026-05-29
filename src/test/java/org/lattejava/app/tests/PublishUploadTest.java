@@ -30,7 +30,6 @@ import static org.testng.Assert.*;
  */
 @Test
 public class PublishUploadTest extends BaseTest {
-  private static final String APP_ID = "e9fdb985-9173-4e01-9d73-ac2d60d1dc8e";
   private static final String CONTENT = "publish-upload-test-content";
   private static final Pattern URL_PATTERN = Pattern.compile("\"url\"\\s*:\\s*\"([^\"]+)\"");
 
@@ -50,7 +49,7 @@ public class PublishUploadTest extends BaseTest {
       assertEquals(before.statusCode(), 404, "object should not exist yet at " + objectURL);
 
       // 1. Call the publish API to get a presigned PUT URL for the artifact key.
-      Tokens tokens = oidc.login("test@lattejava.org", "password", APP_ID);
+      Tokens tokens = oidcForAPI.login("test@lattejava.org", "password", "http://localhost:8888/callback");
       test.clearRequestState();
       test.clearCookies();
       WebTestAsserter asserter = test.withHeader("Authorization", "Bearer " + tokens.accessToken())

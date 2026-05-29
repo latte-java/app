@@ -21,13 +21,13 @@ import module org.testng;
 public class FusionAuthThemeTest extends BaseTest {
   @Test
   public void hostedLoginPageUsesLatteTheme() throws Exception {
-    String redirectURI = "http://localhost:8081" + main.oidcConfig.callbackPath();
-    String query = "client_id=" + URLEncoder.encode(main.oidcConfig.clientId(), StandardCharsets.UTF_8)
+    String redirectURI = "http://localhost:8081" + main.ssrSettings.callbackPath();
+    String query = "client_id=" + URLEncoder.encode(main.ssrConfig.clientId(), StandardCharsets.UTF_8)
         + "&redirect_uri=" + URLEncoder.encode(redirectURI, StandardCharsets.UTF_8)
         + "&response_type=code"
-        + "&scope=" + URLEncoder.encode(String.join(" ", main.oidcConfig.scopes()), StandardCharsets.UTF_8)
+        + "&scope=" + URLEncoder.encode(String.join(" ", main.ssrConfig.scopes()), StandardCharsets.UTF_8)
         + "&state=themetest";
-    URI authorize = URI.create(main.oidcConfig.authorizeEndpoint() + "?" + query);
+    URI authorize = URI.create(main.ssrConfig.authorizeEndpoint() + "?" + query);
 
     try (HttpClient client = HttpClient.newBuilder().followRedirects(HttpClient.Redirect.NEVER).build()) {
       HttpResponse<String> response = client.send(

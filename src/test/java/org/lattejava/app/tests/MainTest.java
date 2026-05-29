@@ -14,7 +14,7 @@ import module org.testng;
 public class MainTest extends BaseTest {
   @Test
   public void alreadyLoggedInButRedirectsToOIDC() throws Exception {
-    oidc.login("test@lattejava.org", "password", "e9fdb985-9173-4e01-9d73-ac2d60d1dc8e");
+    oidc.login("test@lattejava.org", "password");
     test.get("/login")
         .assertHeaderStartsWith("Location", "http://localhost:9013/oauth2/authorize");
   }
@@ -22,7 +22,7 @@ public class MainTest extends BaseTest {
   @Test
   public void createGroup() throws Exception {
     var string = new StringBodyAsserter();
-    oidc.login("test@lattejava.org", "password", "e9fdb985-9173-4e01-9d73-ac2d60d1dc8e");
+    oidc.login("test@lattejava.org", "password");
     String name = "create-group-" + UUID.randomUUID();
     test.get("/app/groups/new")
         .assertStatus(200)
@@ -40,7 +40,7 @@ public class MainTest extends BaseTest {
   @Test
   public void dashboard() throws Exception {
     var string = new StringBodyAsserter();
-    oidc.login("test@lattejava.org", "password", "e9fdb985-9173-4e01-9d73-ac2d60d1dc8e");
+    oidc.login("test@lattejava.org", "password");
     test.get("/app/")
         .assertStatus(200)
         .assertBodyAs(string, s -> s.contains("<body").contains("org.lattejava"));
@@ -55,7 +55,7 @@ public class MainTest extends BaseTest {
   @Test
   public void groupDetail() throws Exception {
     var string = new StringBodyAsserter();
-    oidc.login("test@lattejava.org", "password", "e9fdb985-9173-4e01-9d73-ac2d60d1dc8e");
+    oidc.login("test@lattejava.org", "password");
     test.get("/app/groups/org.lattejava/")
         .assertStatus(200)
         .assertBodyAs(string, s -> s.contains("<body").contains("org.lattejava"));
@@ -64,7 +64,7 @@ public class MainTest extends BaseTest {
   @Test
   public void groupMembers() throws Exception {
     var string = new StringBodyAsserter();
-    oidc.login("test@lattejava.org", "password", "e9fdb985-9173-4e01-9d73-ac2d60d1dc8e");
+    oidc.login("test@lattejava.org", "password");
     test.get("/app/groups/org.lattejava/members/")
         .assertStatus(200)
         .assertBodyAs(string, s -> s.contains("<body").contains("org.lattejava").contains("test@lattejava.org"));
@@ -83,7 +83,7 @@ public class MainTest extends BaseTest {
   @Test
   public void updateSettings_redirectsOnSuccess() throws Exception {
     var string = new StringBodyAsserter();
-    oidc.login("test@lattejava.org", "password", "e9fdb985-9173-4e01-9d73-ac2d60d1dc8e");
+    oidc.login("test@lattejava.org", "password");
     String name = "settings-ok-" + UUID.randomUUID();
     test.withForm(Map.of("name", name))
         .post("/app/groups/new")
@@ -101,7 +101,7 @@ public class MainTest extends BaseTest {
   @Test
   public void updateSettings_rerendersWithErrorWhenTooLong() throws Exception {
     var string = new StringBodyAsserter();
-    oidc.login("test@lattejava.org", "password", "e9fdb985-9173-4e01-9d73-ac2d60d1dc8e");
+    oidc.login("test@lattejava.org", "password");
     String name = "settings-toolong-" + UUID.randomUUID();
     String tooLong = "RETAINME-" + "x".repeat(492);
     test.withForm(Map.of("name", name))
@@ -117,7 +117,7 @@ public class MainTest extends BaseTest {
   @Test
   public void viewerUsernameRenders() throws Exception {
     var string = new StringBodyAsserter();
-    oidc.login("test@lattejava.org", "password", "e9fdb985-9173-4e01-9d73-ac2d60d1dc8e");
+    oidc.login("test@lattejava.org", "password");
     test.get("/app/")
         .assertStatus(200)
         .assertBodyAs(string, s -> s.contains("<body").contains("OrdinaryUser"));

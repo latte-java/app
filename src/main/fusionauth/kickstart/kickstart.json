@@ -5,6 +5,8 @@
     "asymmetricKeyId": "#{UUID()}",
     "applicationId": "e9fdb985-9173-4e01-9d73-ac2d60d1dc8e",
     "clientSecret": "super-secret-secret-that-should-be-regenerated-for-production",
+    "cliApplicationId": "cc5f3c9e-b28e-4632-bafe-823363669820",
+    "cliClientSecret": "super-secret-secret-that-should-be-regenerated-for-production",
     "defaultTenantId": "d7d09513-a3f5-401c-9685-34ab6c552453",
     "adminEmail": "admin@lattejava.org",
     "adminPassword": "password",
@@ -295,7 +297,11 @@
           },
           "formConfiguration": {
             "selfServiceFormId": "#{selfServiceFormId}"
-          }
+          },
+          "roles": [
+            {"name": "admin", "isSuperRole": true, "isDefaultRole": false},
+            {"name": "user", "isSuperRole": false, "isDefaultRole": true}
+          ]
         }
       }
     },
@@ -353,13 +359,66 @@
       "url": "/api/user/registration/#{ordinaryUserId}",
       "body": {
         "registration": {
-          "applicationId": "#{applicationId}"
+          "applicationId": "#{applicationId}",
+          "roles": [
+            "user"
+          ]
         },
         "skipRegistrationVerification": true,
         "user": {
           "email": "#{ordinaryEmail}",
           "username": "OrdinaryUser",
           "password": "#{ordinaryPassword}"
+        }
+      }
+    },
+    {
+      "method": "POST",
+      "url": "/api/application/#{cliApplicationId}",
+      "tenantId": "#{defaultTenantId}",
+      "body": {
+        "application": {
+          "name": "Latte CLI",
+          "oauthConfiguration": {
+            "authorizedRedirectURLs": [
+              "http://localhost:8888/callback"
+            ],
+            "clientAuthenticationPolicy": "NotRequired",
+            "clientSecret": "#{cliClientSecret}",
+            "proofKeyForCodeExchangePolicy": "Required",
+            "consentMode": "NeverPrompt",
+            "enabledGrants": [
+              "authorization_code",
+              "refresh_token"
+            ],
+            "generateRefreshTokens": true,
+            "requireRegistration": true
+          },
+          "jwtConfiguration": {
+            "enabled": true,
+            "accessTokenKeyId": "#{asymmetricKeyId}",
+            "idTokenKeyId": "#{asymmetricKeyId}"
+          },
+          "lambdaConfiguration": {
+            "accessTokenPopulateId": "#{accessTokenPopulateLambdaId}"
+          },
+          "registrationConfiguration": {
+            "enabled": true,
+            "type": "advanced",
+            "formId": "#{registrationFormId}"
+          },
+          "formConfiguration": {
+            "selfServiceFormId": "#{selfServiceFormId}"
+          }
+        }
+      }
+    },
+    {
+      "method": "POST",
+      "url": "/api/user/registration/#{ordinaryUserId}",
+      "body": {
+        "registration": {
+          "applicationId": "#{cliApplicationId}"
         }
       }
     }

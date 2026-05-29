@@ -19,7 +19,23 @@ import org.lattejava.app.model.Member;
  */
 @Test
 public class SettingsViewTest extends BaseTest {
-  private static final String APP_ID = "e9fdb985-9173-4e01-9d73-ac2d60d1dc8e";
+  @Test
+  public void deleteForm_activeOwner_rendersConfirmationWithCancelAndSubmit() throws Exception {
+    String name = "test.settings.view.delete.owner";
+    db.insertGroup(new Group(name, "", GroupState.VERIFIED, null, Instant.now(), Instant.now()));
+    insertTestUserAsOwner(name);
+    try {
+      var string = new StringBodyAsserter();
+      oidc.login("test@lattejava.org", "password");
+      test.get("/app/groups/" + name + "/delete")
+          .assertStatus(200)
+          .assertBodyAs(string, s -> s.contains("Delete " + name)
+                                      .contains("action=\"/app/groups/" + name + "/delete\"")
+                                      .contains("href=\"/app/groups/" + name + "/settings\""));
+    } finally {
+      db.deleteGroup(name);
+    }
+  }
 
   @Test
   public void detail_activeContributor_hidesMembersShowsSettings() throws Exception {
@@ -28,7 +44,7 @@ public class SettingsViewTest extends BaseTest {
     db.insertMember(new Member(name, testUserId, Role.CONTRIBUTOR, MembershipState.ACTIVE, null, null, Instant.now()));
     try {
       var string = new StringBodyAsserter();
-      oidc.login("test@lattejava.org", "password", APP_ID);
+      oidc.login("test@lattejava.org", "password");
       test.get("/app/groups/" + name + "/")
           .assertStatus(200)
           .assertBodyAs(string, s -> s.contains("href=\"/app/groups/" + name + "/settings\"")
@@ -45,7 +61,7 @@ public class SettingsViewTest extends BaseTest {
     insertTestUserAsOwner(name);
     try {
       var string = new StringBodyAsserter();
-      oidc.login("test@lattejava.org", "password", APP_ID);
+      oidc.login("test@lattejava.org", "password");
       test.get("/app/groups/" + name + "/")
           .assertStatus(200)
           .assertBodyAs(string, s -> s.contains("href=\"/app/groups/" + name + "/settings\"")
@@ -62,7 +78,7 @@ public class SettingsViewTest extends BaseTest {
     db.insertMember(new Member(name, testUserId, Role.OWNER, MembershipState.PENDING, null, Instant.now(), null));
     try {
       var string = new StringBodyAsserter();
-      oidc.login("test@lattejava.org", "password", APP_ID);
+      oidc.login("test@lattejava.org", "password");
       test.get("/app/groups/" + name + "/")
           .assertStatus(200)
           .assertBodyAs(string, s -> s.doesNotContain("href=\"/app/groups/" + name + "/settings\"")
@@ -79,29 +95,11 @@ public class SettingsViewTest extends BaseTest {
     db.insertMember(new Member(name, testUserId, Role.CONTRIBUTOR, MembershipState.ACTIVE, null, null, Instant.now()));
     try {
       var string = new StringBodyAsserter();
-      oidc.login("test@lattejava.org", "password", APP_ID);
+      oidc.login("test@lattejava.org", "password");
       test.get("/app/groups/" + name + "/members/leave")
           .assertStatus(200)
           .assertBodyAs(string, s -> s.contains("Leave " + name)
                                       .contains("action=\"/app/groups/" + name + "/members/leave\"")
-                                      .contains("href=\"/app/groups/" + name + "/settings\""));
-    } finally {
-      db.deleteGroup(name);
-    }
-  }
-
-  @Test
-  public void deleteForm_activeOwner_rendersConfirmationWithCancelAndSubmit() throws Exception {
-    String name = "test.settings.view.delete.owner";
-    db.insertGroup(new Group(name, "", GroupState.VERIFIED, null, Instant.now(), Instant.now()));
-    insertTestUserAsOwner(name);
-    try {
-      var string = new StringBodyAsserter();
-      oidc.login("test@lattejava.org", "password", APP_ID);
-      test.get("/app/groups/" + name + "/delete")
-          .assertStatus(200)
-          .assertBodyAs(string, s -> s.contains("Delete " + name)
-                                      .contains("action=\"/app/groups/" + name + "/delete\"")
                                       .contains("href=\"/app/groups/" + name + "/settings\""));
     } finally {
       db.deleteGroup(name);
@@ -115,7 +113,7 @@ public class SettingsViewTest extends BaseTest {
     db.insertMember(new Member(name, testUserId, Role.CONTRIBUTOR, MembershipState.ACTIVE, null, null, Instant.now()));
     try {
       var string = new StringBodyAsserter();
-      oidc.login("test@lattejava.org", "password", APP_ID);
+      oidc.login("test@lattejava.org", "password");
       test.get("/app/groups/" + name + "/settings")
           .assertStatus(200)
           .assertBodyAs(string, s -> s.contains("href=\"/app/groups/" + name + "/members/leave\"")
@@ -135,7 +133,7 @@ public class SettingsViewTest extends BaseTest {
     insertTestUserAsOwner(name);
     try {
       var string = new StringBodyAsserter();
-      oidc.login("test@lattejava.org", "password", APP_ID);
+      oidc.login("test@lattejava.org", "password");
       test.get("/app/groups/" + name + "/settings")
           .assertStatus(200)
           .assertBodyAs(string, s -> s.contains("href=\"/app/groups/" + name + "/members/leave\"")

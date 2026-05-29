@@ -22,15 +22,13 @@ import static org.testng.Assert.*;
  */
 @Test
 public class VerificationFlowTest extends BaseTest {
-  private static final String APP_ID = "e9fdb985-9173-4e01-9d73-ac2d60d1dc8e";
-
   @Test
   public void checkVerification_pendingGitHubGroup_redirectsToDetail() throws Exception {
     String name = "io.github.verifyflow.check";
     db.insertGroup(new Group(name, "", GroupState.PENDING, null, Instant.now(), null));
     insertTestUserAsOwner(name);
     try {
-      oidc.login("test@lattejava.org", "password", APP_ID);
+      oidc.login("test@lattejava.org", "password");
       test.post("/app/groups/" + name + "/verify/check")
           .assertRedirect(303, "/app/groups/" + name + "/");
 
@@ -50,7 +48,7 @@ public class VerificationFlowTest extends BaseTest {
     db.insertGroup(new Group(name, "", GroupState.VERIFIED, null, Instant.now(), Instant.now()));
     insertTestUserAsOwner(name);
     try {
-      oidc.login("test@lattejava.org", "password", APP_ID);
+      oidc.login("test@lattejava.org", "password");
       test.post("/app/groups/" + name + "/verify/check")
           .assertRedirect(303, "/app/groups/" + name + "/");
 
@@ -71,7 +69,7 @@ public class VerificationFlowTest extends BaseTest {
     insertTestUserAsOwner(name);
     try {
       var string = new StringBodyAsserter();
-      oidc.login("test@lattejava.org", "password", APP_ID);
+      oidc.login("test@lattejava.org", "password");
       test.get("/app/groups/" + name + "/verify")
           .assertStatus(200)
           .assertBodyAs(string, s -> s.contains("previous verification attempt expired"));
@@ -89,7 +87,7 @@ public class VerificationFlowTest extends BaseTest {
     insertTestUserAsOwner(name);
     try {
       var string = new StringBodyAsserter();
-      oidc.login("test@lattejava.org", "password", APP_ID);
+      oidc.login("test@lattejava.org", "password");
       test.get("/app/groups/" + name + "/verify")
           .assertStatus(200)
           .assertBodyAs(string, s -> s.contains("Add this TXT record").contains("pending.verifyflow.test"));
@@ -105,7 +103,7 @@ public class VerificationFlowTest extends BaseTest {
     db.insertGroup(new Group(name, "", GroupState.VERIFIED, null, Instant.now(), Instant.now()));
     insertTestUserAsOwner(name);
     try {
-      oidc.login("test@lattejava.org", "password", APP_ID);
+      oidc.login("test@lattejava.org", "password");
       test.get("/app/groups/" + name + "/verify")
           .assertRedirect(303, "/app/groups/" + name + "/");
     } finally {

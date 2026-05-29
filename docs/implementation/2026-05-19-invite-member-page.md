@@ -84,7 +84,7 @@ public class InviteFlowTest extends BaseTest {
   public void inviteForm_missingGroup_redirectsHome() throws Exception {
     // GroupSecurity (installed at the /app/groups prefix) sends missing-group requests to /app/ with a 303
     // before the controller runs.
-    oidc.login("test@lattejava.org", "password", APP_ID);
+    oidc.login("test@lattejava.org", "password");
     test.get("/app/groups/test.invite.missing/members/invite")
         .assertRedirect(303, "/app/");
   }
@@ -95,7 +95,7 @@ public class InviteFlowTest extends BaseTest {
     db.insertGroup(new Group(name, "", GroupState.VERIFIED, null, Instant.now(), Instant.now()));
     try {
       var string = new StringBodyAsserter();
-      oidc.login("test@lattejava.org", "password", APP_ID);
+      oidc.login("test@lattejava.org", "password");
       test.get("/app/groups/" + name + "/members/invite")
           .assertStatus(200)
           .assertBodyAs(string, s -> s.contains("Invite a member")
@@ -309,7 +309,7 @@ Add these two methods to `src/test/java/org/lattejava/app/tests/InviteFlowTest.j
     db.insertGroup(new Group(name, "", GroupState.VERIFIED, null, Instant.now(), Instant.now()));
     try {
       var string = new StringBodyAsserter();
-      oidc.login("test@lattejava.org", "password", APP_ID);
+      oidc.login("test@lattejava.org", "password");
       test.withForm(Map.of("email", "", "role", "CONTRIBUTOR"))
           .post("/app/groups/" + name + "/members/invite")
           .assertStatus(200)
@@ -326,7 +326,7 @@ Add these two methods to `src/test/java/org/lattejava/app/tests/InviteFlowTest.j
     db.insertGroup(new Group(name, "", GroupState.VERIFIED, null, Instant.now(), Instant.now()));
     String email = "test+invite-page-" + UUID.randomUUID() + "@lattejava.org";
     try {
-      oidc.login("test@lattejava.org", "password", APP_ID);
+      oidc.login("test@lattejava.org", "password");
       test.withForm(Map.of("email", email, "role", "CONTRIBUTOR"))
           .post("/app/groups/" + name + "/members/invite")
           .assertRedirect(303, "/app/groups/" + name + "/members/");
@@ -404,7 +404,7 @@ Add this method to `src/test/java/org/lattejava/app/tests/InviteFlowTest.java` (
   @Test
   public void membersList_inviteButtonLinksToInvitePage() throws Exception {
     var string = new StringBodyAsserter();
-    oidc.login("test@lattejava.org", "password", APP_ID);
+    oidc.login("test@lattejava.org", "password");
     test.get("/app/groups/org.lattejava/members/")
         .assertStatus(200)
         .assertBodyAs(string, s -> s.contains("href=\"/app/groups/org.lattejava/members/invite\"")

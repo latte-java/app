@@ -8,24 +8,20 @@ import module java.base;
 import module org.lattejava.app;
 import module org.lattejava.web;
 import module org.testng;
+import java.util.Optional;
 
 import org.lattejava.app.model.Group;
 import org.lattejava.app.model.Member;
 
-import java.util.Optional;
-
 import static org.testng.Assert.*;
 
 /**
- * HTTP-level coverage of the dedicated change-role page: the form renders with the member's current role
- * pre-selected on the radio-card, missing group/member return 404, POST updates the role and redirects to the
- * members listing with a trailing slash, and the members listing renders the "Change role" link in place of the
- * old inline select form.
+ * HTTP-level coverage of the dedicated change-role page: the form renders with the member's current role pre-selected
+ * on the radio-card, missing group/member return 404, POST updates the role and redirects to the members listing with a
+ * trailing slash, and the members listing renders the "Change role" link in place of the old inline select form.
  */
 @Test
 public class RoleFlowTest extends BaseTest {
-  private static final String APP_ID = "e9fdb985-9173-4e01-9d73-ac2d60d1dc8e";
-
   @Test
   public void changeRole_demoteOwnerWithOtherOwners_updatesDb() throws Exception {
     String name = "test.role.demote";
@@ -36,7 +32,7 @@ public class RoleFlowTest extends BaseTest {
     try {
       db.insertMember(new Member(name, target, Role.OWNER, MembershipState.ACTIVE, null, null, Instant.now()));
       db.insertMember(new Member(name, otherOwner, Role.OWNER, MembershipState.ACTIVE, null, null, Instant.now()));
-      oidc.login("test@lattejava.org", "password", APP_ID);
+      oidc.login("test@lattejava.org", "password");
       test.withForm(Map.of("role", "CONTRIBUTOR"))
           .post("/app/groups/" + name + "/members/" + target + "/role")
           .assertRedirect(303, "/app/groups/" + name + "/members/");
@@ -62,7 +58,7 @@ public class RoleFlowTest extends BaseTest {
     insertTestUserAsOwner(name);
     try {
       db.insertMember(new Member(name, target, Role.CONTRIBUTOR, MembershipState.ACTIVE, null, null, Instant.now()));
-      oidc.login("test@lattejava.org", "password", APP_ID);
+      oidc.login("test@lattejava.org", "password");
       test.withForm(Map.of("role", "OWNER"))
           .post("/app/groups/" + name + "/members/" + target + "/role")
           .assertRedirect(303, "/app/groups/" + name + "/members/");
@@ -78,13 +74,13 @@ public class RoleFlowTest extends BaseTest {
   @Test
   public void membersList_hidesChangeRoleAndRemoveOnSelfRow() throws Exception {
     var string = new StringBodyAsserter();
-    oidc.login("test@lattejava.org", "password", APP_ID);
+    oidc.login("test@lattejava.org", "password");
     UUID testUserId = db.listMembers("org.lattejava").getFirst().userId();
     test.get("/app/groups/org.lattejava/members/")
         .assertStatus(200)
         .assertBodyAs(string, s -> s.doesNotContain("href=\"/app/groups/org.lattejava/members/" + testUserId + "/role\"")
-                                     .doesNotContain("/app/groups/org.lattejava/members/" + testUserId + "/remove")
-                                     .doesNotContain("<option value=\"OWNER\""));
+                                    .doesNotContain("/app/groups/org.lattejava/members/" + testUserId + "/remove")
+                                    .doesNotContain("<option value=\"OWNER\""));
   }
 
   @Test
@@ -97,13 +93,13 @@ public class RoleFlowTest extends BaseTest {
       db.insertMember(new Member(name, testUserId, Role.OWNER, MembershipState.ACTIVE, null, null, Instant.now()));
       db.insertMember(new Member(name, other, Role.CONTRIBUTOR, MembershipState.ACTIVE, null, null, Instant.now()));
       var string = new StringBodyAsserter();
-      oidc.login("test@lattejava.org", "password", APP_ID);
+      oidc.login("test@lattejava.org", "password");
       test.get("/app/groups/" + name + "/members/")
           .assertStatus(200)
           .assertBodyAs(string, s -> s.contains("href=\"/app/groups/" + name + "/members/" + other + "/role\"")
-                                       .contains("/app/groups/" + name + "/members/" + other + "/remove")
-                                       .doesNotContain("href=\"/app/groups/" + name + "/members/" + testUserId + "/role\"")
-                                       .doesNotContain("/app/groups/" + name + "/members/" + testUserId + "/remove"));
+                                      .contains("/app/groups/" + name + "/members/" + other + "/remove")
+                                      .doesNotContain("href=\"/app/groups/" + name + "/members/" + testUserId + "/role\"")
+                                      .doesNotContain("/app/groups/" + name + "/members/" + testUserId + "/remove"));
     } finally {
       db.deleteGroup(name);
     }
@@ -118,14 +114,14 @@ public class RoleFlowTest extends BaseTest {
     try {
       db.insertMember(new Member(name, target, Role.CONTRIBUTOR, MembershipState.ACTIVE, null, null, Instant.now()));
       var string = new StringBodyAsserter();
-      oidc.login("test@lattejava.org", "password", APP_ID);
+      oidc.login("test@lattejava.org", "password");
       test.get("/app/groups/" + name + "/members/" + target + "/role")
           .assertStatus(200)
           .assertBodyAs(string, s -> s.contains("Change role")
-                                       .contains("action=\"/app/groups/" + name + "/members/" + target + "/role\"")
-                                       .contains("value=\"CONTRIBUTOR\" checked")
-                                       .contains("value=\"OWNER\"")
-                                       .doesNotContain("value=\"OWNER\" checked"));
+                                      .contains("action=\"/app/groups/" + name + "/members/" + target + "/role\"")
+                                      .contains("value=\"CONTRIBUTOR\" checked")
+                                      .contains("value=\"OWNER\"")
+                                      .doesNotContain("value=\"OWNER\" checked"));
     } finally {
       db.deleteGroup(name);
     }
@@ -140,13 +136,13 @@ public class RoleFlowTest extends BaseTest {
     try {
       db.insertMember(new Member(name, target, Role.OWNER, MembershipState.ACTIVE, null, null, Instant.now()));
       var string = new StringBodyAsserter();
-      oidc.login("test@lattejava.org", "password", APP_ID);
+      oidc.login("test@lattejava.org", "password");
       test.get("/app/groups/" + name + "/members/" + target + "/role")
           .assertStatus(200)
           .assertBodyAs(string, s -> s.contains("Change role")
-                                       .contains("value=\"OWNER\" checked")
-                                       .contains("value=\"CONTRIBUTOR\"")
-                                       .doesNotContain("value=\"CONTRIBUTOR\" checked"));
+                                      .contains("value=\"OWNER\" checked")
+                                      .contains("value=\"CONTRIBUTOR\"")
+                                      .doesNotContain("value=\"CONTRIBUTOR\" checked"));
     } finally {
       db.deleteGroup(name);
     }
@@ -155,7 +151,7 @@ public class RoleFlowTest extends BaseTest {
   @Test
   public void roleForm_missingGroup_redirectsHome() throws Exception {
     UUID target = UUID.fromString("ee000001-0000-0000-0000-000000000001");
-    oidc.login("test@lattejava.org", "password", APP_ID);
+    oidc.login("test@lattejava.org", "password");
     test.get("/app/groups/test.role.missing/members/" + target + "/role")
         .assertRedirect(303, "/app/");
   }
@@ -167,7 +163,7 @@ public class RoleFlowTest extends BaseTest {
     db.insertGroup(new Group(name, "", GroupState.VERIFIED, null, Instant.now(), Instant.now()));
     insertTestUserAsOwner(name);
     try {
-      oidc.login("test@lattejava.org", "password", APP_ID);
+      oidc.login("test@lattejava.org", "password");
       test.get("/app/groups/" + name + "/members/" + target + "/role")
           .assertStatus(404);
     } finally {

@@ -24,8 +24,6 @@ import static org.testng.Assert.*;
  */
 @Test
 public class AcceptDeclineFlowTest extends BaseTest {
-  private static final String APP_ID = "e9fdb985-9173-4e01-9d73-ac2d60d1dc8e";
-
   @Test
   public void accept_activeMember_redirectsAndJoinedAtUnchanged() throws Exception {
     String name = "test.accept.active";
@@ -33,7 +31,7 @@ public class AcceptDeclineFlowTest extends BaseTest {
     db.insertGroup(new Group(name, "", GroupState.VERIFIED, null, Instant.now(), Instant.now()));
     try {
       db.insertMember(new Member(name, testUserId, Role.OWNER, MembershipState.ACTIVE, null, null, originalJoinedAt));
-      oidc.login("test@lattejava.org", "password", APP_ID);
+      oidc.login("test@lattejava.org", "password");
       test.post("/app/groups/" + name + "/members/accept")
           .assertRedirect(303, "/app/groups/" + name + "/");
 
@@ -59,7 +57,7 @@ public class AcceptDeclineFlowTest extends BaseTest {
       db.deleteMember(name, testUserId);
       assertTrue(db.findMember(name, testUserId).isEmpty(), "precondition: pending row removed");
 
-      oidc.login("test@lattejava.org", "password", APP_ID);
+      oidc.login("test@lattejava.org", "password");
       // Stale Accept button POSTs; GroupSecurity has no row to match and redirects home.
       test.post("/app/groups/" + name + "/members/accept")
           .assertRedirect(303, "/app/");
@@ -77,7 +75,7 @@ public class AcceptDeclineFlowTest extends BaseTest {
     db.insertGroup(new Group(name, "", GroupState.VERIFIED, null, Instant.now(), Instant.now()));
     try {
       db.insertMember(new Member(name, testUserId, Role.CONTRIBUTOR, MembershipState.PENDING, null, Instant.now(), null));
-      oidc.login("test@lattejava.org", "password", APP_ID);
+      oidc.login("test@lattejava.org", "password");
       test.post("/app/groups/" + name + "/members/accept")
           .assertRedirect(303, "/app/groups/" + name + "/");
 
@@ -98,7 +96,7 @@ public class AcceptDeclineFlowTest extends BaseTest {
     String name = "test.accept.unknown";
     db.insertGroup(new Group(name, "", GroupState.VERIFIED, null, Instant.now(), Instant.now()));
     try {
-      oidc.login("test@lattejava.org", "password", APP_ID);
+      oidc.login("test@lattejava.org", "password");
       test.post("/app/groups/" + name + "/members/accept")
           .assertRedirect(303, "/app/");
 
@@ -114,7 +112,7 @@ public class AcceptDeclineFlowTest extends BaseTest {
     db.insertGroup(new Group(name, "", GroupState.VERIFIED, null, Instant.now(), Instant.now()));
     try {
       db.insertMember(new Member(name, testUserId, Role.OWNER, MembershipState.ACTIVE, null, null, Instant.now()));
-      oidc.login("test@lattejava.org", "password", APP_ID);
+      oidc.login("test@lattejava.org", "password");
       test.post("/app/groups/" + name + "/members/decline")
           .assertRedirect(303, "/app/groups/");
 
@@ -133,7 +131,7 @@ public class AcceptDeclineFlowTest extends BaseTest {
     db.insertGroup(new Group(name, "", GroupState.VERIFIED, null, Instant.now(), Instant.now()));
     try {
       db.insertMember(new Member(name, testUserId, Role.CONTRIBUTOR, MembershipState.PENDING, null, Instant.now(), null));
-      oidc.login("test@lattejava.org", "password", APP_ID);
+      oidc.login("test@lattejava.org", "password");
       test.post("/app/groups/" + name + "/members/decline")
           .assertRedirect(303, "/app/groups/");
 
@@ -150,7 +148,7 @@ public class AcceptDeclineFlowTest extends BaseTest {
     String name = "test.decline.unknown";
     db.insertGroup(new Group(name, "", GroupState.VERIFIED, null, Instant.now(), Instant.now()));
     try {
-      oidc.login("test@lattejava.org", "password", APP_ID);
+      oidc.login("test@lattejava.org", "password");
       test.post("/app/groups/" + name + "/members/decline")
           .assertRedirect(303, "/app/");
 

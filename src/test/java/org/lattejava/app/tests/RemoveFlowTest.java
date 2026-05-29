@@ -8,7 +8,6 @@ import module java.base;
 import module org.lattejava.app;
 import module org.lattejava.web;
 import module org.testng;
-import java.util.Optional;
 
 import org.lattejava.app.model.Group;
 import org.lattejava.app.model.Member;
@@ -24,8 +23,6 @@ import static org.testng.Assert.*;
  */
 @Test
 public class RemoveFlowTest extends BaseTest {
-  private static final String APP_ID = "e9fdb985-9173-4e01-9d73-ac2d60d1dc8e";
-
   @Test
   public void membersList_rendersRemoveLinkInsteadOfPostForm() throws Exception {
     String name = "test.remove.list";
@@ -36,7 +33,7 @@ public class RemoveFlowTest extends BaseTest {
       db.insertMember(new Member(name, testUserId, Role.OWNER, MembershipState.ACTIVE, null, null, Instant.now()));
       db.insertMember(new Member(name, other, Role.CONTRIBUTOR, MembershipState.ACTIVE, null, null, Instant.now()));
       var string = new StringBodyAsserter();
-      oidc.login("test@lattejava.org", "password", APP_ID);
+      oidc.login("test@lattejava.org", "password");
       test.get("/app/groups/" + name + "/members/")
           .assertStatus(200)
           .assertBodyAs(string, s -> s.contains("href=\"/app/groups/" + name + "/members/" + other + "/remove\"")
@@ -49,7 +46,7 @@ public class RemoveFlowTest extends BaseTest {
   @Test
   public void removeForm_missingGroup_redirectsHome() throws Exception {
     UUID target = UUID.fromString("ef000002-0000-0000-0000-000000000001");
-    oidc.login("test@lattejava.org", "password", APP_ID);
+    oidc.login("test@lattejava.org", "password");
     test.get("/app/groups/test.remove.missing/members/" + target + "/remove")
         .assertRedirect(303, "/app/");
   }
@@ -61,7 +58,7 @@ public class RemoveFlowTest extends BaseTest {
     db.insertGroup(new Group(name, "", GroupState.VERIFIED, null, Instant.now(), Instant.now()));
     insertTestUserAsOwner(name);
     try {
-      oidc.login("test@lattejava.org", "password", APP_ID);
+      oidc.login("test@lattejava.org", "password");
       test.get("/app/groups/" + name + "/members/" + target + "/remove")
           .assertStatus(404);
     } finally {
@@ -78,7 +75,7 @@ public class RemoveFlowTest extends BaseTest {
     try {
       db.insertMember(new Member(name, target, Role.CONTRIBUTOR, MembershipState.ACTIVE, null, null, Instant.now()));
       var string = new StringBodyAsserter();
-      oidc.login("test@lattejava.org", "password", APP_ID);
+      oidc.login("test@lattejava.org", "password");
       test.get("/app/groups/" + name + "/members/" + target + "/remove")
           .assertStatus(200)
           .assertBodyAs(string, s -> s.contains("Remove member")
@@ -103,7 +100,7 @@ public class RemoveFlowTest extends BaseTest {
       UUID testUserId = db.listMembers("org.lattejava").getFirst().userId();
       db.insertMember(new Member(name, testUserId, Role.OWNER, MembershipState.ACTIVE, null, null, Instant.now()));
       db.insertMember(new Member(name, target, Role.CONTRIBUTOR, MembershipState.ACTIVE, null, null, Instant.now()));
-      oidc.login("test@lattejava.org", "password", APP_ID);
+      oidc.login("test@lattejava.org", "password");
       test.post("/app/groups/" + name + "/members/" + target + "/remove")
           .assertRedirect(303, "/app/groups/" + name + "/members/");
 

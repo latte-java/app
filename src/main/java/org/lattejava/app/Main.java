@@ -19,13 +19,16 @@ public class Main {
       "fusionauth.apiKey", "fusionauth.baseUrl", "fusionauth.clientId", "fusionauth.clientSecret", "fusionauth.issuer",
       "github.clientId", "github.clientSecret", "s3.accessKeyId", "s3.bucket", "s3.endpoint", "s3.region",
       "s3.secretAccessKey", "web.cookieEncryptionKey");
+  public final OIDCConfig apiConfig;
   public final Configuration config;
   public final Cookies cookies;
-  public final OIDC<User> oidc;
-  public final OIDCConfig oidcConfig;
   public final int port;
+  public final OIDCConfig ssrConfig;
+  public final BrowserSettings ssrSettings;
   public final JTETemplates templates;
   public final Web web;
+  private final OIDC<User> apiOIDC;
+  private final OIDC<User> ssrOIDC;
 
   public Main() {
     this(8080);
@@ -38,15 +41,27 @@ public class Main {
         Path.of("src/test/resources/config.properties")
     );
 
-    this.oidcConfig = OIDCConfig.builder()
-                                .issuer(config.get("fusionauth.issuer"))
-                                .clientId(config.get("fusionauth.clientId"))
-                                .clientSecret(config.get("fusionauth.clientSecret"))
-                                .introspectionEndpoint(URI.create(config.get("fusionauth.baseUrl") + "/oauth2/introspect"))
-                                .postLoginPage("/app/")
-                                .postLogout("https://lattejava.org")
-                                .build();
-    this.oidc = OIDC.create(oidcConfig, UserService::toUser);
+    // OIDC setup
+    this.ssrConfig = OIDCConfig.builder()
+                               .issuer(config.get("fusionauth.issuer"))
+                               .clientId(config.get("fusionauth.clientId"))
+                               .clientSecret(config.get("fusionauth.clientSecret"))
+                               .introspectionEndpoint(URI.create(config.get("fusionauth.baseUrl") + "/oauth2/introspect"))
+                               .build();
+    this.ssrSettings = BrowserSettings.builder()
+                                      .postLoginPage("/app/")
+                                      .postLogoutPage("https://lattejava.org")
+                                      .build();
+    this.ssrOIDC = OIDC.ssr(ssrConfig, ssrSettings, UserService::toUser);
+
+    this.apiConfig = OIDCConfig.builder()
+                               .issuer(config.get("fusionauth.issuer"))
+                               .clientId(config.get("fusionauth.cliClientId"))
+                               .clientSecret(config.get("fusionauth.cliClientSecret"))
+                               .introspectionEndpoint(URI.create(config.get("fusionauth.baseUrl") + "/oauth2/introspect"))
+                               .build();
+    this.apiOIDC = OIDC.api(apiConfig, UserService::toUser);
+
     this.cookies = Cookies.encryptionKeys(Base64.getDecoder().decode(config.get("web.cookieEncryptionKey")));
     this.templates = new JTETemplates(BASE_DIR, Path.of("build"));
     this.port = port;
@@ -75,21 +90,21 @@ public class Main {
        .install(SecurityHeaders.defaults().contentSecurityPolicy(CSP.defaults()
                                                                     .addImgSrc("https://gravatar.com")
                                                                     .build()))
-       .install(oidc)
+       .install(OIDC.sessionEndpoints(ssrConfig, ssrSettings))
        .get("/", this::slash)
        .prefix("/app", app ->
-           app.install(oidc.authenticated())
+           app.install(ssrOIDC.authenticated())
               .get("/", this::dashboard)
               .prefix("/oauth/github", gh -> {
-                GitHubController gitHubController = new GitHubController(cookies, oidc);
+                GitHubController gitHubController = new GitHubController(cookies, ssrOIDC);
                 gh.get("/connect", gitHubController::startConnection)
                   .get("/callback", gitHubController::githubCallback);
 
               })
               .prefix("/groups", groupsRoute -> {
-                GroupController groups = new GroupController(oidc, templates);
-                MembershipController members = new MembershipController(oidc, templates);
-                GroupSecurity groupSecurity = new GroupSecurity(oidc);
+                GroupController groups = new GroupController(ssrOIDC, templates);
+                MembershipController members = new MembershipController(ssrOIDC, templates);
+                GroupSecurity groupSecurity = new GroupSecurity(ssrOIDC);
                 Middleware isActiveMember = groupSecurity.hasRole(Role.OWNER, Role.CONTRIBUTOR);
                 Middleware isOwner = groupSecurity.hasRole(Role.OWNER);
 
@@ -116,34 +131,33 @@ public class Main {
                 // (GroupSecurity accepts PENDING rows). Leave reaches the controller for any member row including
                 // PENDING — a PENDING leaver simply deletes their invitation row, equivalent to decline. The service
                 // handles state transitions safely.
-                groupsRoute.prefix("/{groupName}/members", membersRoute -> {
-                  membersRoute.get("/", members::list, isOwner)
-                              .get("/invite", members::inviteForm, isOwner)
-                              .post("/invite", members::invite, isOwner)
-                              .post("/accept", members::accept)
-                              .post("/decline", members::decline)
-                              .get("/{userId}/remove", members::removeForm, isOwner)
-                              .post("/{userId}/remove", members::remove, isOwner)
-                              .get("/{userId}/role", members::changeRoleForm, isOwner)
-                              .post("/{userId}/role", members::changeRole, isOwner)
-                              .get("/leave", members::leaveForm)
-                              .post("/leave", members::leave);
-                });
+                groupsRoute.prefix("/{groupName}/members", membersRoute ->
+                    membersRoute.get("/", members::list, isOwner)
+                                .get("/invite", members::inviteForm, isOwner)
+                                .post("/invite", members::invite, isOwner)
+                                .post("/accept", members::accept)
+                                .post("/decline", members::decline)
+                                .get("/{userId}/remove", members::removeForm, isOwner)
+                                .post("/{userId}/remove", members::remove, isOwner)
+                                .get("/{userId}/role", members::changeRoleForm, isOwner)
+                                .post("/{userId}/role", members::changeRole, isOwner)
+                                .get("/leave", members::leaveForm)
+                                .post("/leave", members::leave));
               })
        )
        .prefix("/api", api -> {
          PublishController publish = new PublishController();
          PublishAuthorizer publishAuthorizer = new PublishAuthorizer();
          api.install(new APIExceptionHandler())
-            .install(oidc.apiAuthenticated())
-            .post("/v1/publish/{groupName}", publish::publish, JSONBodySupplier.of(PublishRequest.class), oidc.apiAuthorized(publishAuthorizer));
+            .install(apiOIDC.authenticated())
+            .post("/v1/publish/{groupName}", publish::publish, JSONBodySupplier.of(PublishRequest.class), apiOIDC.authorized(publishAuthorizer));
        })
        .missingHandler(this::missing)
        .start(port);
   }
 
   private void dashboard(HTTPRequest req, HTTPResponse res) throws IOException {
-    User user = oidc.user();
+    User user = ssrOIDC.user();
     templates.html("pages/dashboard.jte", req, res,
         Map.of(
             "view", Services.viewService().buildMainView(user)
