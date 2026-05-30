@@ -15,10 +15,13 @@ import org.lattejava.web.Configuration;
 @SuppressWarnings("resource")
 public class Main {
   public static final Path BASE_DIR = Path.of("web");
-  public static final List<String> REQUIRED_CONFIG = List.of("d1.accountId", "d1.apiToken", "d1.baseUrl", "d1.databaseId",
-      "fusionauth.apiKey", "fusionauth.baseUrl", "fusionauth.clientId", "fusionauth.clientSecret", "fusionauth.issuer",
-      "github.clientId", "github.clientSecret", "s3.accessKeyId", "s3.bucket", "s3.endpoint", "s3.region",
-      "s3.secretAccessKey", "web.cookieEncryptionKey");
+  public static final List<String> REQUIRED_CONFIG = List.of(
+      "d1.accountId", "d1.apiToken", "d1.baseUrl", "d1.databaseId",
+      "fusionauth.apiKey", "fusionauth.baseUrl", "fusionauth.cliClientId", "fusionauth.cliClientSecret", "fusionauth.clientId", "fusionauth.clientSecret", "fusionauth.issuer",
+      "github.clientId", "github.clientSecret",
+      "s3.accessKeyId", "s3.bucket", "s3.endpoint", "s3.region", "s3.secretAccessKey",
+      "web.cookieEncryptionKey"
+  );
   public final OIDCConfig apiConfig;
   public final Configuration config;
   public final Cookies cookies;
@@ -63,7 +66,7 @@ public class Main {
     this.apiOIDC = OIDC.api(apiConfig, UserService::toUser);
 
     this.cookies = Cookies.encryptionKeys(Base64.getDecoder().decode(config.get("web.cookieEncryptionKey")));
-    this.templates = new JTETemplates(BASE_DIR, Path.of("build"));
+    this.templates = new JTETemplates(BASE_DIR);
     this.port = port;
     this.web = new Web();
   }

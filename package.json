@@ -1,9 +1,10 @@
 {
   "dependencies": {
+    "@cloudflare/containers": "^0.3.5",
     "@tailwindcss/cli": "^4.2.4",
     "tailwindcss": "^4.2.4"
   },
   "devDependencies": {
-    "wrangler": "^3.78.0"
+    "wrangler": "^4.95.0"
   }
 }

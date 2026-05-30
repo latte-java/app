@@ -51,11 +51,11 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$USER_HOME$/.cache/latte/org/lattejava/web/0.3.0-{integration}/web-0.3.0-{integration}.jar!/" />
+          <root url="jar://$USER_HOME$/.cache/latte/org/lattejava/web/0.3.0/web-0.3.0.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$USER_HOME$/.cache/latte/org/lattejava/web/0.3.0-{integration}/web-0.3.0-{integration}-src.jar!/" />
+          <root url="jar://$USER_HOME$/.cache/latte/org/lattejava/web/0.3.0/web-0.3.0-src.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>

@@ -20,7 +20,7 @@ project(group: "org.lattejava", name: "app", version: "0.1.0", licenses: ["MIT"]
       dependency(id: "com.inversoft:restify:4.4.0")
       dependency(id: "org.lattejava:http:0.1.5")
       dependency(id: "org.lattejava:jwt:0.1.0")
-      dependency(id: "org.lattejava:web:0.3.0-{integration}")
+      dependency(id: "org.lattejava:web:0.3.0")
     }
     group(name: "test-compile", export: false) {
       dependency(id: "org.testng:testng:7.12.0")
@@ -33,11 +33,12 @@ project(group: "org.lattejava", name: "app", version: "0.1.0", licenses: ["MIT"]
 }
 
 // Plugins
-dependency = loadPlugin(id: "org.lattejava.plugin:dependency:0.2.0")
-idea = loadPlugin(id: "org.lattejava.plugin:idea:0.2.0")
-java = loadPlugin(id: "org.lattejava.plugin:java:0.2.0")
-javaTestNG = loadPlugin(id: "org.lattejava.plugin:java-testng:0.2.0")
-release = loadPlugin(id: "org.lattejava.plugin:release-git:0.2.0")
+dependency = loadPlugin(id: "org.lattejava.plugin:dependency:0.3.0")
+file = loadPlugin(id: "org.lattejava.plugin:file:0.3.0")
+idea = loadPlugin(id: "org.lattejava.plugin:idea:0.3.0")
+java = loadPlugin(id: "org.lattejava.plugin:java:0.3.0")
+javaTestNG = loadPlugin(id: "org.lattejava.plugin:java-testng:0.3.0")
+release = loadPlugin(id: "org.lattejava.plugin:release-git:0.3.0")
 
 // Plugin settings
 java.settings.javaVersion = "25"
@@ -70,6 +71,29 @@ target(name: "release", description: "Releases a full version of the project", d
 
 target(name: "idea", description: "Updates the IntelliJ IDEA module file") {
   idea.iml()
+}
+
+target(name: "bundle", description: "Builds a runnable bundle into `build/bundle`", dependsOn: ["build"]) {
+  file.copy(to: "build/bundle/web") {
+    fileSet(dir: "web", includePatterns: [/.*/])
+  }
+
+  file.copy(to: "build/bundle/lib") {
+    fileSet(dir: "build/jars", includePatterns: [/app-${project.version}.jar/])
+  }
+
+  file.copy(to: "build/bundle") {
+    fileSet(dir: "src/main/scripts", includePatterns: [/app.sh/])
+  }
+
+  dependency.copy(to: "build/bundle/lib") {
+    dependencies(group: "compile", transitive: true, fetchSource: false, transitiveGroups: ["compile", "runtime"])
+    dependencies(group: "runtime", transitive: true, fetchSource: false, transitiveGroups: ["compile", "runtime"])
+  }
+}
+
+target(name: "deploy", description: "Builds the bundle and deploys the app to Cloudflare (Worker + container)", dependsOn: ["bundle"]) {
+  exec(["npx", "wrangler", "deploy"])
 }
 
 target(name: "tailwind", description: "Installs Tailwind CSS via npm (if needed) and runs it in watch mode against web/**/*.jte") {

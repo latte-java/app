@@ -11,6 +11,15 @@
 #   build/bundle/web/     - the JTE templates and static assets
 #
 # Honors JAVA_HOME (falls back to `java` on PATH) and forwards JAVA_OPTS to the JVM.
+#
+# The module path is an explicit, colon-separated list of every jar in lib/ -- NOT the
+# lib/ directory itself. JTE compiles templates at runtime with the in-process javac and
+# derives that compiler's classpath from the jdk.module.path system property (see
+# gg.jte.compiler.ClassUtils#resolveClasspathFromClassLoader). A directory on
+# jdk.module.path becomes a single -classpath entry, and javac does not scan jars inside
+# a classpath directory, so template compilation fails with "package gg.jte.html does not
+# exist". Listing the jars explicitly -- which is what `latte run` does -- puts each jar
+# on javac's classpath so JTE resolves them.
 set -euo pipefail
 
 # Resolve the bundle directory (where this script lives) and run from there, so the
@@ -23,8 +32,14 @@ if [[ -n "${JAVA_HOME:-}" ]]; then
   JAVA_BIN="$JAVA_HOME/bin/java"
 fi
 
+# Build a colon-separated module path from every jar in lib/.
+MODULE_PATH=""
+for jar in lib/*.jar; do
+  MODULE_PATH="${MODULE_PATH:+$MODULE_PATH:}$jar"
+done
+
 exec "$JAVA_BIN" \
   ${JAVA_OPTS:-} \
-  --module-path lib \
+  --module-path "$MODULE_PATH" \
   --module org.lattejava.app/org.lattejava.app.Main \
   "$@"
