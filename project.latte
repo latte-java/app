@@ -48,9 +48,16 @@ target(name: "clean", description: "Cleans the project") {
   java.clean()
 }
 
-target(name: "build", description: "Compiles and JARs the project") {
+target(name: "build", description: "Compiles the project, JARs it, and compiles the Tailwind CSS") {
   java.compile()
   java.jar()
+
+  // Compile Tailwind CSS one-shot into web/static/css/app.css (the `tailwind` target below is the
+  // watch variant used during development). Ensures the CLI is installed first, like that target.
+  if (!new File("node_modules/@tailwindcss/cli").exists()) {
+    exec(["npm", "install", "tailwindcss", "@tailwindcss/cli"])
+  }
+  exec(["npx", "@tailwindcss/cli", "-i", "src/main/css/app.css", "-o", "web/static/css/app.css"])
 }
 
 target(name: "test", description: "Runs the project's tests", dependsOn: ["build"]) {
@@ -93,7 +100,9 @@ target(name: "bundle", description: "Builds a runnable bundle into `build/bundle
 }
 
 target(name: "deploy", description: "Builds the bundle and deploys the app to Cloudflare (Worker + container)", dependsOn: ["bundle"]) {
-  exec(["npx", "wrangler", "deploy"])
+  // --env= explicitly targets the top-level (production) environment. The [env.dev] block exists only
+  // for local dev D1 migrations, so without this wrangler warns about an ambiguous target environment.
+  exec(["npx", "wrangler", "deploy", "--env="])
 }
 
 target(name: "tailwind", description: "Installs Tailwind CSS via npm (if needed) and runs it in watch mode against web/**/*.jte") {

@@ -19,9 +19,18 @@ import { env } from "cloudflare:workers";
  */
 export class LatteApp extends Container {
   defaultPort = 8080;
-  // Keep the JVM warm long enough to avoid paying boot + JTE template compilation on every request,
-  // while still scaling to zero when idle. Tune against observed traffic.
-  sleepAfter = "5m";
+  // Run the container 24/7 so users never pay a JVM cold start. Per Cloudflare's container lifecycle,
+  // a container with no `sleepAfter` is never idle-evicted: it keeps running until the host restarts
+  // or it is stopped manually. So we deliberately do NOT set sleepAfter (the alternative — scaling to
+  // zero and warming with a cron — was rejected; running one instance continuously is only a few
+  // dollars a month). The dominant cold-start cost is JVM boot, not JTE compilation (templates compile
+  // in milliseconds and are cached). The container still starts lazily on the first request after a
+  // deploy, which is the only time a visitor can hit a cold start.
+  // Port-readiness probe target. The default ("ping" -> GET /) hits the app's "/" route, which 301s to
+  // /app/ and then 302s to the https FusionAuth login; the probe follows redirects and dies trying to
+  // open https to the container ("HTTPS not currently supported"), so readiness never passes. Point it
+  // at GET /health, which returns 200 with no redirect.
+  pingEndpoint = "ping/health";
 
   envVars = {
     // Non-secret configuration (set in wrangler.toml [vars]).

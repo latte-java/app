@@ -331,9 +331,6 @@
   .mx-auto {
     margin-inline: auto;
   }
-  .mt-0\.5 {
-    margin-top: calc(var(--spacing) * 0.5);
-  }
   .mt-1 {
     margin-top: calc(var(--spacing) * 1);
   }
@@ -1534,11 +1531,6 @@
   .dark\:text-emerald-300 {
     &:where(.dark, .dark *) {
       color: var(--color-emerald-300);
-    }
-  }
-  .dark\:text-emerald-400 {
-    &:where(.dark, .dark *) {
-      color: var(--color-emerald-400);
     }
   }
   .dark\:text-red-300 {

@@ -95,6 +95,7 @@ public class Main {
                                                                     .build()))
        .install(OIDC.sessionEndpoints(ssrConfig, ssrSettings))
        .get("/", this::slash)
+       .get("/health", this::health)
        .prefix("/app", app ->
            app.install(ssrOIDC.authenticated())
               .get("/", this::dashboard)
@@ -166,6 +167,12 @@ public class Main {
             "view", Services.viewService().buildMainView(user)
         )
     );
+  }
+
+  private void health(HTTPRequest req, HTTPResponse res) throws IOException {
+    res.setStatus(200);
+    res.setHeader("Content-Type", "text/plain");
+    res.getWriter().write("OK");
   }
 
   private void missing(HTTPRequest req, HTTPResponse res) throws IOException {
