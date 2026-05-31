@@ -7,6 +7,10 @@ project(group: "org.lattejava", name: "app", version: "0.1.0", licenses: ["MIT"]
     standard()
   }
 
+  publishWorkflow {
+    latte()
+  }
+
   dependencies {
     group(name: "compile") {
       dependency(id: "com.fasterxml.jackson.core:jackson-annotations:2.21")
