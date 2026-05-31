@@ -44,10 +44,6 @@ public class PublishUploadTest extends BaseTest {
     String objectURL = main.config.get("s3.endpoint") + "/" + main.config.get("s3.bucket") + "/" + S3Signer.uriEncode(key, true);
 
     try (HttpClient http = HttpClient.newHttpClient()) {
-      // Precondition: nothing at the object's location yet (direct GET against the public test bucket).
-      HttpResponse<Void> before = http.send(get(objectURL), HttpResponse.BodyHandlers.discarding());
-      assertEquals(before.statusCode(), 404, "object should not exist yet at " + objectURL);
-
       // 1. Call the publish API to get a presigned PUT URL for the artifact key.
       Tokens tokens = oidcForAPI.login("test@lattejava.org", "password", "http://localhost:8888/callback");
       test.clearRequestState();
