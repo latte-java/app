@@ -159,6 +159,7 @@ public class Main {
               PublishController publish = new PublishController();
               PublishAuthorizer publishAuthorizer = new PublishAuthorizer();
               pub.install(apiOIDC.authenticated())
+                 .get("/{groupName}", publish::precheck, apiOIDC.authorized(publishAuthorizer)) // GET and HEAD
                  .post("/{groupName}", publish::publish, JSONBodySupplier.of(PublishRequest.class), apiOIDC.authorized(publishAuthorizer));
             });
        })
