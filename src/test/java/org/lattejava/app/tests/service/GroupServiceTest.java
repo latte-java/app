@@ -115,6 +115,10 @@ public class GroupServiceTest {
         return false; // not empty
       }
 
+      public List<String> listKeys(String prefix) {
+        throw new UnsupportedOperationException("not used in this test");
+      }
+
       public String presignPut(String key, Duration expiry) {
         throw new UnsupportedOperationException("not used in this test");
       }
@@ -134,6 +138,10 @@ public class GroupServiceTest {
     S3Client fakeS3 = new S3Client() {
       public boolean isPrefixEmpty(String prefix) {
         return true; // empty
+      }
+
+      public List<String> listKeys(String prefix) {
+        throw new UnsupportedOperationException("not used in this test");
       }
 
       public String presignPut(String key, Duration expiry) {

@@ -150,11 +150,17 @@ public class Main {
               })
        )
        .prefix("/api", api -> {
-         PublishController publish = new PublishController();
-         PublishAuthorizer publishAuthorizer = new PublishAuthorizer();
+         RepositorySearchController repositorySearch = new RepositorySearchController();
+
+         // APIExceptionHandler renders JSON errors for every /api route (including the nested publish prefix below).
          api.install(new APIExceptionHandler())
-            .install(apiOIDC.authenticated())
-            .post("/v1/publish/{groupName}", publish::publish, JSONBodySupplier.of(PublishRequest.class), apiOIDC.authorized(publishAuthorizer));
+            .get("/v1/repository/search", repositorySearch::search) // Public
+            .prefix("/v1/publish", pub -> { // Protected
+              PublishController publish = new PublishController();
+              PublishAuthorizer publishAuthorizer = new PublishAuthorizer();
+              pub.install(apiOIDC.authenticated())
+                 .post("/{groupName}", publish::publish, JSONBodySupplier.of(PublishRequest.class), apiOIDC.authorized(publishAuthorizer));
+            });
        })
        .missingHandler(this::missing)
        .start(port);

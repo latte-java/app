@@ -20,6 +20,14 @@ public interface S3Client {
   boolean isPrefixEmpty(String prefix);
 
   /**
+   * Lists every object key under {@code prefix} in the configured bucket, following pagination to completion.
+   *
+   * @param prefix The key prefix to list (e.g. {@code "org/example/lib/"}). Trailing slash is recommended.
+   * @return The matching object keys (may be empty); never null.
+   */
+  List<String> listKeys(String prefix);
+
+  /**
    * Returns a short-lived presigned URL the caller can use to {@code PUT} an object at {@code key} into the configured
    * bucket.
    *

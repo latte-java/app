@@ -13,6 +13,7 @@ public class Services {
   private static GroupService groupService;
   private static MembershipService membershipService;
   private static PublishService publishService;
+  private static RepositorySearchService repositorySearchService;
   private static VerificationService verificationService;
   private static ViewService viewService;
 
@@ -24,6 +25,7 @@ public class Services {
     groupService = new GroupService(config);
     membershipService = new MembershipService(config);
     publishService = new PublishService(config);
+    repositorySearchService = new RepositorySearchService(config);
     verificationService = new VerificationService(config);
     viewService = new ViewService(config);
 
@@ -37,6 +39,10 @@ public class Services {
 
   public static PublishService publishService() {
     return publishService;
+  }
+
+  public static RepositorySearchService repositorySearchService() {
+    return repositorySearchService;
   }
 
   public static void shutdown() {
