@@ -8,6 +8,14 @@ compatibility_date = "2026-05-01"
 pattern = "app.lattejava.org"
 custom_domain = true
 
+# Also serve the token-authenticated JSON API at api.lattejava.org. A Worker custom domain routes by
+# exact hostname, so a bare DNS record for api.* yields a 522 (CF finds no Worker route and tries a
+# non-existent origin). Binding it as a custom domain here routes it to the same container; wrangler
+# provisions the edge cert + DNS record on deploy (delete any manual api.* DNS record first).
+[[routes]]
+pattern = "api.lattejava.org"
+custom_domain = true
+
 # The JVM app runs in this container (built from ./Dockerfile -> the `latte bundle` output).
 # A single instance is enough for this app; bump instance_type to standard-2 if cold-start CPU
 # (JVM boot + JTE template compilation) proves too slow.
