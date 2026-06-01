@@ -19,13 +19,19 @@ import { env } from "cloudflare:workers";
  */
 export class LatteApp extends Container {
   defaultPort = 8080;
-  // Run the container 24/7 so users never pay a JVM cold start. Per Cloudflare's container lifecycle,
-  // a container with no `sleepAfter` is never idle-evicted: it keeps running until the host restarts
-  // or it is stopped manually. So we deliberately do NOT set sleepAfter (the alternative — scaling to
-  // zero and warming with a cron — was rejected; running one instance continuously is only a few
-  // dollars a month). The dominant cold-start cost is JVM boot, not JTE compilation (templates compile
-  // in milliseconds and are cached). The container still starts lazily on the first request after a
-  // deploy, which is the only time a visitor can hit a cold start.
+  // Run the container 24/7 so users never pay a JVM cold start. NOTE: the @cloudflare/containers
+  // `Container` base class we extend defaults `sleepAfter` to "10m" (DEFAULT_SLEEP_AFTER) and actively
+  // signals the container to stop once that idle window elapses — so simply OMITTING sleepAfter does
+  // NOT give the platform's "never idle-evict" behavior; it silently inherits the 10m default and the
+  // container scales to zero (the "Ready" state) ~10 minutes after the last request. Cloudflare's docs
+  // ("if you do not set sleepAfter, it keeps running") describe the raw platform, not this helper class.
+  // The library only accepts s/m/h time expressions with no "never" sentinel, so we set an effectively
+  // infinite idle window: any real request renews the timer, and the only things that stop the container
+  // are a host restart or a deploy (both unavoidable). This keeps one instance running continuously
+  // (a few dollars a month) without the rejected scale-to-zero + cron-warmer approach. The dominant
+  // cold-start cost is JVM boot, not JTE compilation (templates compile in ms and are cached); a visitor
+  // can only hit a cold start on the first request after a deploy or host restart.
+  sleepAfter = "8760h"; // ~1 year — effectively "never idle-evict"
   // Port-readiness probe target. The default ("ping" -> GET /) hits the app's "/" route, which 301s to
   // /app/ and then 302s to the https FusionAuth login; the probe follows redirects and dies trying to
   // open https to the container ("HTTPS not currently supported"), so readiness never passes. Point it
