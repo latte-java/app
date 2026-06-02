@@ -5,9 +5,11 @@
 module org.lattejava.app.tests {
   requires fusionauth.java.client;
   requires java.net.http;
+  requires java.sql;
   requires org.lattejava.app;
   requires org.lattejava.http;
   requires org.lattejava.web;
+  requires org.postgresql.jdbc;
   requires org.testng;
   requires restify;
 

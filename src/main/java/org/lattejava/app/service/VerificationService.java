@@ -26,7 +26,7 @@ public class VerificationService {
     return t;
   });
 
-  private final DatabaseClient databaseClient;
+  private final DatabaseService databaseService;
   private final DNSResolver dnsResolver;
   private final FusionAuthClient fusionAuth;
   private final GitHubClient githubClient;
@@ -34,15 +34,15 @@ public class VerificationService {
   private final String githubClientSecret;
 
   public VerificationService(Configuration config) {
-    this(config, new JNDIDNSResolver(), new GitHubHTTPClient());
+    this(Services.databaseService(), config, new JNDIDNSResolver(), new GitHubHTTPClient());
   }
 
   /**
    * Test-only constructor. Production code should use the {@link #VerificationService(Configuration)} constructor
    * instead.
    */
-  public VerificationService(Configuration config, DNSResolver dnsResolver, GitHubClient githubClient) {
-    this.databaseClient = new DatabaseClient(config);
+  public VerificationService(DatabaseService databaseService, Configuration config, DNSResolver dnsResolver, GitHubClient githubClient) {
+    this.databaseService = databaseService;
     this.dnsResolver = dnsResolver;
     this.fusionAuth = new FusionAuthClient(
         config.get("fusionauth.apiKey"),
@@ -71,33 +71,33 @@ public class VerificationService {
    * @param now       the current instant.
    */
   public void check(String groupName, Instant now) {
-    Optional<Group> groupOpt = databaseClient.findGroup(groupName);
+    Optional<Group> groupOpt = databaseService.findGroup(groupName);
     if (groupOpt.isEmpty()) {
       return;
     }
 
     if (groupOpt.get().state() == GroupState.FAILED) {
-      databaseClient.updateGroupState(groupName, GroupState.PENDING, null);
+      databaseService.updateGroupState(groupName, GroupState.PENDING, null);
       GroupVerification verification = new GroupVerification(groupName, now, now);
-      databaseClient.insertVerification(verification);
+      databaseService.insertVerification(verification);
       checkOne(verification, now);
       return;
     }
 
-    databaseClient.findVerification(groupName).ifPresent(v -> checkOne(v, now));
+    databaseService.findVerification(groupName).ifPresent(v -> checkOne(v, now));
   }
 
   public void checkOne(GroupVerification verification, Instant now) {
-    Optional<Group> groupOpt = databaseClient.findGroup(verification.groupName());
+    Optional<Group> groupOpt = databaseService.findGroup(verification.groupName());
     if (groupOpt.isEmpty()) {
-      databaseClient.deleteVerification(verification.groupName());
+      databaseService.deleteVerification(verification.groupName());
       return;
     }
 
     Group group = groupOpt.get();
     String code = group.verificationCode();
     if (code == null) {
-      databaseClient.deleteVerification(verification.groupName());
+      databaseService.deleteVerification(verification.groupName());
       return;
     }
 
@@ -111,23 +111,23 @@ public class VerificationService {
 
     boolean matched = txtRecords.stream().anyMatch(code::equals);
     if (matched) {
-      databaseClient.updateGroupState(verification.groupName(), GroupState.VERIFIED, now);
-      databaseClient.deleteVerification(verification.groupName());
+      databaseService.updateGroupState(verification.groupName(), GroupState.VERIFIED, now);
+      databaseService.deleteVerification(verification.groupName());
       return;
     }
 
     Instant deadline = verification.startedAt().plus(DEADLINE);
     if (!now.isBefore(deadline)) {
-      databaseClient.updateGroupState(verification.groupName(), GroupState.FAILED, null);
-      databaseClient.deleteVerification(verification.groupName());
+      databaseService.updateGroupState(verification.groupName(), GroupState.FAILED, null);
+      databaseService.deleteVerification(verification.groupName());
       return;
     }
 
-    databaseClient.updateVerificationLastChecked(verification.groupName(), now);
+    databaseService.updateVerificationLastChecked(verification.groupName(), now);
   }
 
   public Optional<GroupVerification> findVerification(String groupName) {
-    return databaseClient.findVerification(groupName);
+    return databaseService.findVerification(groupName);
   }
 
   public boolean hasGitHubLink(UUID userId) {
@@ -172,7 +172,7 @@ public class VerificationService {
   }
 
   public void scan(Instant now) {
-    List<GroupVerification> due = databaseClient.listVerificationsDueForCheck(now);
+    List<GroupVerification> due = databaseService.listVerificationsDueForCheck(now);
     for (GroupVerification v : due) {
       try {
         checkOne(v, now);
@@ -242,8 +242,8 @@ public class VerificationService {
       }
     }
 
-    databaseClient.updateGroupState(group.name(), GroupState.VERIFIED, Instant.now());
-    databaseClient.deleteVerification(group.name());
+    databaseService.updateGroupState(group.name(), GroupState.VERIFIED, Instant.now());
+    databaseService.deleteVerification(group.name());
     return GitHubVerifyResult.VERIFIED;
   }
 

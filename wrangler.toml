@@ -34,43 +34,20 @@ tag = "v1"
 new_sqlite_classes = ["LatteApp"]
 
 # Non-secret app configuration injected into the container (see src/main/worker/index.js). Secrets
-# (D1_APITOKEN, FUSIONAUTH_APIKEY, *_CLIENTSECRET, S3_SECRETACCESSKEY, WEB_COOKIEENCRYPTIONKEY) are
-# set out-of-band with `wrangler secret put` in Step 6 and are intentionally NOT committed here.
-# The D1_* identifiers and S3 access key id below are filled in during Step 4/6 once the prod
-# resources exist; left blank now so the config can be reviewed before any real values land in git.
+# (DB_PASSWORD, FUSIONAUTH_APIKEY, *_CLIENTSECRET, S3_SECRETACCESSKEY, WEB_COOKIEENCRYPTIONKEY) are
+# set out-of-band with `wrangler secret put` and are intentionally NOT committed here.
+# DB_URL points at PlanetScale's Dedicated Primary PgBouncer on port 6432 (transaction-pooling mode,
+# so prepareThreshold=0 disables server-side prepared statements); fill in the real host/database/user.
 [vars]
 FUSIONAUTH_BASEURL = "https://auth.lattejava.org"
 FUSIONAUTH_ISSUER = "https://auth.lattejava.org"
 S3_REGION = "auto"
 S3_ENDPOINT = "https://fc7ca59f9d7571dfd8bce1c3edfd4f0a.r2.cloudflarestorage.com"
 S3_BUCKET = "latte-repository"
-D1_BASEURL = "https://api.cloudflare.com/client/v4"
-D1_ACCOUNTID = "fc7ca59f9d7571dfd8bce1c3edfd4f0a"
-D1_DATABASEID = "b50a0f6d-867b-46d7-8283-d4fac5357c5a"
+DB_URL = "jdbc:postgresql://<planetscale-host>:6432/<database>?sslmode=require&prepareThreshold=0"
+DB_USERNAME = "<planetscale-user>"
 FUSIONAUTH_CLIENTID = "e9fdb985-9173-4e01-9d73-ac2d60d1dc8e"
 FUSIONAUTH_CLICLIENTID = "cc5f3c9e-b28e-4632-bafe-823363669820"
 GITHUB_CLIENTID = "Ov23lizxeTxZaPWqEIXY"
 # Pending:
-# S3_ACCESSKEYID = ""  # R2 S3 API token (Step 6), paired with the S3_SECRETACCESSKEY secret
-
-# D1 bindings below are used ONLY by the `wrangler d1` CLI (migrations apply / execute). The running
-# app reaches D1 over the REST API using the D1_* config above, NOT these bindings.
-#
-# Default (top-level) = production. The prod Worker is what `wrangler deploy` ships:
-#   npx wrangler d1 migrations apply latte-app-prod --remote
-[[d1_databases]]
-binding = "DB"
-database_name = "latte-app-prod"
-database_id = "b50a0f6d-867b-46d7-8283-d4fac5357c5a"
-migrations_dir = "migrations"
-
-# Local development targets a per-developer dev D1 (in each developer's own Cloudflare account).
-# This environment is used ONLY for dev D1 commands and is never deployed. Pass `--env dev`:
-#   npx wrangler d1 migrations apply latte-app-dev --remote --env dev
-#   npx wrangler d1 execute latte-app-dev --remote --env dev --command "SELECT 1;"
-# Each developer overrides database_id locally with their own dev DB (do not commit your id).
-[[env.dev.d1_databases]]
-binding = "DB"
-database_name = "latte-app-dev"
-database_id = "9e8d6d3f-b6c8-4357-b9da-eb387c05faa5"
-migrations_dir = "migrations"
+# S3_ACCESSKEYID = ""  # R2 S3 API token, paired with the S3_SECRETACCESSKEY secret

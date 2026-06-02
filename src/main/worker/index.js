@@ -15,7 +15,7 @@ import { env } from "cloudflare:workers";
  * the `[vars]` block in wrangler.toml; secrets come from `wrangler secret put`. Both land on `env` and
  * are mirrored into `envVars` below, which Cloudflare injects into the container at startup.
  * org.lattejava.web.Configuration reads them, normalizing dotted setting names to UPPER_SNAKE
- * (e.g. `d1.accountId` -> `D1_ACCOUNTID`), so the keys here use that normalized form.
+ * (e.g. `db.url` -> `DB_URL`), so the keys here use that normalized form.
  */
 export class LatteApp extends Container {
   defaultPort = 8080;
@@ -40,9 +40,8 @@ export class LatteApp extends Container {
 
   envVars = {
     // Non-secret configuration (set in wrangler.toml [vars]).
-    D1_ACCOUNTID: env.D1_ACCOUNTID,
-    D1_BASEURL: env.D1_BASEURL,
-    D1_DATABASEID: env.D1_DATABASEID,
+    DB_URL: env.DB_URL,
+    DB_USERNAME: env.DB_USERNAME,
     FUSIONAUTH_BASEURL: env.FUSIONAUTH_BASEURL,
     FUSIONAUTH_ISSUER: env.FUSIONAUTH_ISSUER,
     FUSIONAUTH_CLIENTID: env.FUSIONAUTH_CLIENTID,
@@ -54,7 +53,7 @@ export class LatteApp extends Container {
     S3_REGION: env.S3_REGION,
 
     // Secrets (set with `wrangler secret put <NAME>`).
-    D1_APITOKEN: env.D1_APITOKEN,
+    DB_PASSWORD: env.DB_PASSWORD,
     FUSIONAUTH_APIKEY: env.FUSIONAUTH_APIKEY,
     FUSIONAUTH_CLIENTSECRET: env.FUSIONAUTH_CLIENTSECRET,
     FUSIONAUTH_CLICLIENTSECRET: env.FUSIONAUTH_CLICLIENTSECRET,

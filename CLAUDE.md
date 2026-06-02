@@ -25,6 +25,8 @@ This project is built with `latte` (the Latte build tool, project file is `proje
 | Run tests                 | `latte test` (depends on `build`)                                                                             |
 | Run a single test         | `latte test --test=org.lattejava.app.tests.MainTest`                                                          |
 | Run the web server        | `latte run` (boots on `localhost:8080`, main class `org.lattejava.app.Main`)                                  |
+| Create/recreate DBs       | `latte database --type=main,test` (drops + recreates `app`/`app_test` on local Postgres and loads `src/main/sql/schema.sql`; `--type` defaults to both) |
+| Regenerate jOOQ classes   | `latte codegen` (introspects the live `app` DB and regenerates `src/main/java/org/lattejava/app/db/jooq`; run after schema changes) |
 | Tailwind watch            | `latte tailwind` (rebuilds `web/static/css/app.css` from `src/main/css/app.css` on changes to `web/**/*.jte`) |
 | Start MinIO (test S3)     | `latte minio` (runs a local MinIO container on `:9000` and creates the `latte-test` bucket; needed for tests) |
 | Local integration release | `latte int` (publishes to local integration repo)                                                             |
@@ -52,44 +54,41 @@ Create a GitHub OAuth App at https://github.com/settings/developers with the hom
 
 GitHub-email caveat: `LinkByEmail` resolves an existing FA user by the email returned from GitHub's `/user` endpoint. If your GitHub primary email is set to private, `/user` returns `email: null` and FA rejects the login. Either make your primary email public on GitHub, or change the IDP's `linkingStrategy` to something username-based.
 
-## Database (D1)
+## Database (PostgreSQL + jOOQ)
 
-Production and dev both run against Cloudflare D1 over the REST API. **Each developer needs their own D1 database in their own Cloudflare account** — there is no local emulator.
+The data layer is PostgreSQL accessed through [jOOQ](https://www.jooq.org/) over a HikariCP pool. Dev and tests run against a **local PostgreSQL** (no Cloudflare account needed); production points at **PlanetScale (Postgres)** while the app still deploys on a Cloudflare container. Data access lives in `org.lattejava.app.db.DatabaseService`, which owns the `DataSource` + jOOQ `DSLContext`; `Main` does no database work.
+
+Schema is plain SQL — `src/main/sql/schema.sql` (tables) and `src/main/sql/seed.sql` (the reserved `org.lattejava` group). It is the single source of truth: the `database` target loads it, and `codegen` introspects the resulting DB. There is **no migration tool yet** (epoch-millis timestamps are `BIGINT`; enums are `TEXT` + `CHECK`, mapped to the Java enums and `Instant` by jOOQ forced-type converters).
 
 ### One-time setup
 
-1. Create a Cloudflare D1 database (Cloudflare dashboard → Workers & Pages → D1 → Create). Name it whatever; the committed default in `wrangler.toml` is `latte-app-dev`.
-2. Create an API token (User → API Tokens → Create) with `Account.D1:Edit` scope.
-3. Add to `~/.config/latte/app/config.properties`:
+1. Install and run PostgreSQL locally (e.g. Homebrew `postgresql@18`). The `database` plugin connects via `psql` on `127.0.0.1:5432`.
+2. Add to `~/.config/latte/app/config.properties` for running the dev server (`latte run`):
 
    ```properties
-   d1.baseUrl=https://api.cloudflare.com/client/v4
-   d1.accountId=<your account id>
-   d1.databaseId=<your database id>
-   d1.apiToken=<your api token>
+   db.url=jdbc:postgresql://127.0.0.1:5432/app
+   db.username=dev
+   db.password=dev
    ```
-4. Edit your local `wrangler.toml` and replace the placeholder `database_id` with your real one. Don't commit that change.
-5. Apply migrations:
+3. Create the databases and load the schema:
 
    ```
-   cd app
-   npx wrangler d1 migrations apply latte-app-dev --remote
+   latte database --type=main,test
    ```
 
-   (Replace `latte-app-dev` with your DB name. Re-run after adding new migrations.)
+   This drops + recreates `app` (dev) and `app_test` (tests), creates/grants the `dev` role, and loads `schema.sql` (plus `seed.sql` into `app`). Re-run after editing `schema.sql`.
+4. After any schema change, regenerate the committed jOOQ classes: `latte codegen` (introspects the live `app` DB).
 
-### Migrations
+   **Note on test config:** the committed `src/test/resources/config.properties` points `db.*` at `app_test`. The per-developer `~/.config` config takes precedence, so a `db.url` there (pointing at `app`) overrides it — and the per-method test reset wipes whatever DB it connects to. Keep your personal `db.url` on `app`, run tests with that in place only if you accept they hit `app_test` via the committed config, or omit `db.*` from personal config when running the suite. (Same precedence caveat as `s3.*`.)
 
-Schema changes are SQL files in `migrations/` numbered `NNNN_description.sql`. Wrangler tracks applied migrations in the built-in `d1_migrations` table. Apply with `npx wrangler d1 migrations apply <db-name> --remote`.
-
-### Tests + D1
+### Tests + PostgreSQL
 
 `latte test` requires:
 
 - FusionAuth running locally on `:9013` (existing requirement).
-- Network access to your D1 (the test fixture issues `DELETE`/`INSERT` against the real DB before the suite runs).
+- A local PostgreSQL with `app_test` provisioned (`latte database --type=test`).
 
-`MainTest.beforeSuite()` wipes all rows and re-seeds the `org.lattejava` group + an `OWNER` membership for the FA test user.
+`BaseTest` resets state with an `@BeforeMethod` that deletes all rows (members, group_verifications, groups — child tables first) and re-seeds the `org.lattejava` group + an `OWNER` membership for the FA test user before **every** test method.
 
 ## Storage (S3-compatible)
 
@@ -135,7 +134,7 @@ Static files come from `web/static` mounted at `/static`.
 Services are singletons constructed in `Services.initialize(config)`. Validation is never inlined: each service calls a validator in `org.lattejava.app.service.validation` (`GroupValidator`, `MembershipValidator`, `PublishValidator`) and throws `ValidationException`.
 
 - **`UserService.toUser(JWT)`** — pure JWT → `User` mapping, used as the OIDC factory (`OIDC.create(oidcConfig, UserService::toUser)`). Maps `sub` → `userId`, plus `email` and `preferred_username` → `username`. Email is the primary identifier. Note: those two identity claims are **not** in FusionAuth's default access token — the kickstart's `JWTPopulate` lambda injects them (see the FusionAuth section).
-- **`GroupService`** — D1-backed group operations via `DatabaseClient`: create (kind-specific verification state), delete (guarded by an empty-S3-prefix check), lookup, owning-group resolution (`findOwningGroup`, used by the publish API), and description updates.
+- **`GroupService`** — PostgreSQL-backed group operations via `DatabaseService`: create (kind-specific verification state), delete (guarded by an empty-S3-prefix check), lookup, owning-group resolution (`findOwningGroup`, used by the publish API), and description updates.
 - **`MembershipService`** — group memberships (invite / accept / decline / leave / role change / remove), enriching member rows with FusionAuth user data.
 - **`PublishService`** — validates a publish request and returns a presigned S3 `PUT` URL (see *Publish API*).
 - **`VerificationService`** — drives group-ownership verification (DNS TXT challenges and GitHub user/org checks) on a scheduled scan.
@@ -145,16 +144,16 @@ Services are singletons constructed in `Services.initialize(config)`. Validation
 
 `POST /api/v1/publish/{groupName}` issues a short-lived presigned S3 `PUT` URL so the sibling `cli` can upload an artifact. `web`'s `apiAuthenticated()` validates the bearer access token (reactively refreshing via an `X-Refresh-Token` header when needed); `PublishAuthorizer` (an `APIAuthorizer` in `org.lattejava.app.security`) resolves the most-specific registered group owning the namespace and requires the caller to be an `ACTIVE` `OWNER`/`CONTRIBUTOR` of that group, which must be `VERIFIED`. `PublishController` (a `BodyHandler` fed by `JSONBodySupplier`) then has `PublishService` validate that the requested key is within the namespace and mint the URL via `S3HttpClient`/`S3Signer`. Errors render as JSON via `APIExceptionHandler` (installed at `/api`); browser routes still render the HTML error page via `AppExceptionHandler`. `GET /api/v1/publish/{groupName}` runs the same `authenticated()` + `PublishAuthorizer` chain with no body and no S3 work — the CLI calls it (as a `HEAD`, which the HTTP server rewrites to GET while suppressing the body) as a pre-check to confirm the token is valid and the caller may publish to the group, so reaching `PublishController.precheck` (authz passed) returns `200`, an invalid token `401`, and a failed authorization `403`. There is no separate HEAD route to register because the server auto-serves HEAD from the GET handler. Full design: `docs/design/2026-05-22-publish-api-design.md`.
 
-### Domain model (D1-backed)
+### Domain model (PostgreSQL-backed)
 
-Groups, memberships, and verifications live in Cloudflare D1 (see "Database (D1)" above). FusionAuth is the system of record for user identity only — there is no FA-side group or membership state. State on the records:
+Groups, memberships, and verifications live in PostgreSQL (see "Database (PostgreSQL + jOOQ)" above). FusionAuth is the system of record for user identity only — there is no FA-side group or membership state. State on the records:
 
 - `Group.state` → `GroupState` (`VERIFIED` | `PENDING` | `FAILED`)
 - `Member.state` → `MembershipState` (`PENDING` | `ACTIVE`)
 - `Member.role` → `Role` (`CONTRIBUTOR` | `OWNER`)
 - `GroupVerification` tracks outstanding DNS TXT challenges (one per pending group).
 
-Records under `org.lattejava.app.model` — `User`, `Group`, `Member`, `MembershipState`, `Role`, `GroupState`, `GroupVerification`, `InviteRequest`, and the publish API's JSON carriers `PublishRequest`/`PublishResponse` — are immutable carriers; templates render the domain ones directly. View-only models live in `org.lattejava.app.model.view` (`MainView`, `GroupView`, `VerificationView`). (`Artifact` and `ActivityEntry` are placeholder carriers for not-yet-wired artifact/activity UI.) SQL CRUD is on `org.lattejava.app.db.DatabaseClient`.
+Records under `org.lattejava.app.model` — `User`, `Group`, `Member`, `MembershipState`, `Role`, `GroupState`, `GroupVerification`, `InviteRequest`, and the publish API's JSON carriers `PublishRequest`/`PublishResponse` — are immutable carriers; templates render the domain ones directly. View-only models live in `org.lattejava.app.model.view` (`MainView`, `GroupView`, `VerificationView`). (`Artifact` and `ActivityEntry` are placeholder carriers for not-yet-wired artifact/activity UI.) Data access is on `org.lattejava.app.db.DatabaseService` (jOOQ DSL against the generated classes in `org.lattejava.app.db.jooq`).
 
 ### Templates (`web/`)
 

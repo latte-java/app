@@ -16,7 +16,7 @@ import org.lattejava.web.Configuration;
 public class Main {
   public static final Path BASE_DIR = Path.of("web");
   public static final List<String> REQUIRED_CONFIG = List.of(
-      "d1.accountId", "d1.apiToken", "d1.baseUrl", "d1.databaseId",
+      "db.password", "db.url", "db.username",
       "fusionauth.apiKey", "fusionauth.baseUrl", "fusionauth.cliClientId", "fusionauth.cliClientSecret", "fusionauth.clientId", "fusionauth.clientSecret", "fusionauth.issuer",
       "github.clientId", "github.clientSecret",
       "s3.accessKeyId", "s3.bucket", "s3.endpoint", "s3.region", "s3.secretAccessKey",

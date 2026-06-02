@@ -25,17 +25,22 @@ import static org.testng.Assert.assertNull;
 import static org.testng.Assert.assertTrue;
 
 @Test
-public class DatabaseClientTest {
-  public DatabaseClient client;
+public class DatabaseServiceTest {
+  public DatabaseService client;
+
+  @AfterClass
+  public void afterClass() {
+    client.close();
+  }
 
   @BeforeClass
   public void beforeClass() {
     Configuration config = new Configuration(
-        List.of("d1.accountId", "d1.apiToken", "d1.baseUrl", "d1.databaseId"),
+        List.of("db.password", "db.url", "db.username"),
         Path.of(System.getProperty("user.home"), ".config", "latte", "app", "config.properties"),
         Path.of("src/test/resources/config.properties")
     );
-    client = new DatabaseClient(config);
+    client = new DatabaseService(config);
   }
 
   @Test
@@ -242,13 +247,6 @@ public class DatabaseClientTest {
     } finally {
       client.deleteGroup("test.due.fixture");
     }
-  }
-
-  @Test
-  public void selectOne() {
-    D1Response response = client.query("SELECT 1 AS one");
-    assertTrue(response.success(), "D1 query should succeed");
-    assertEquals(response.result().getFirst().results().getFirst().get("one"), 1);
   }
 
   @Test

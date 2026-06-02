@@ -14,7 +14,7 @@ import static org.testng.Assert.*;
 
 @Test
 public class GroupValidatorTest {
-  public DatabaseClient client;
+  public DatabaseService client;
   public GroupValidator validator;
 
   private static Group group(String name) {
@@ -24,11 +24,11 @@ public class GroupValidatorTest {
   @BeforeClass
   public void beforeClass() {
     Configuration config = new Configuration(
-        List.of("d1.accountId", "d1.apiToken", "d1.baseUrl", "d1.databaseId"),
+        List.of("db.password", "db.url", "db.username"),
         Path.of(System.getProperty("user.home"), ".config", "latte", "app", "config.properties"),
         Path.of("src/test/resources/config.properties")
     );
-    client = new DatabaseClient(config);
+    client = new DatabaseService(config);
     TLDList tlds = new TLDList(Set.of("org", "com", "io", "dev", "net"));
     validator = new GroupValidator(client, tlds);
   }

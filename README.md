@@ -11,14 +11,15 @@ modules, and integrating with the `cli`.
   bearer-token auth for a JSON API (`web`'s `apiAuthenticated`/`apiAuthorized`).
 - **Server-side rendering** — JTE 3 templates with a component library, styled with Tailwind v4.
 - **Identity** — FusionAuth via OpenID Connect (plus a "Sign in with GitHub" identity provider).
-- **Data & storage** — Cloudflare D1 (SQL over REST) for groups/memberships, and an S3-compatible
-  object store (Cloudflare R2 in production, MinIO for tests) with presigned-URL artifact publishing.
+- **Data & storage** — PostgreSQL via jOOQ for groups/memberships (local Postgres for dev/tests,
+  PlanetScale in production), and an S3-compatible object store (Cloudflare R2 in production, MinIO
+  for tests) with presigned-URL artifact publishing.
 
 ## Tech stack
 
 - **Java 25** (JPMS modules) — see `.javaversion`.
 - **Latte build tool** — `project.latte`, not Maven/Gradle.
-- JTE 3 · Tailwind v4 · FusionAuth · Cloudflare D1 + R2 / MinIO.
+- JTE 3 · Tailwind v4 · FusionAuth · PostgreSQL + jOOQ · R2 / MinIO.
 
 ## Quick start
 
@@ -26,13 +27,14 @@ modules, and integrating with the `cli`.
 latte build      # compile + jar
 latte run        # run the server on http://localhost:8080  (main: org.lattejava.app.Main)
 latte test       # run the test suite (depends on build)
+latte database   # create/recreate the local Postgres app/app_test databases + load schema
 latte minio      # start a local MinIO container for S3 tests
 latte tailwind   # rebuild CSS from src/main/css/app.css on template changes
 ```
 
 Running and testing need some local services and per-developer config (FusionAuth on `:9013`, a
-Cloudflare D1 database, an S3 store, and a `~/.config/latte/app/config.properties`). The full,
-step-by-step setup — FusionAuth kickstart, D1 migrations, R2/MinIO, and GitHub OAuth — lives in
+local PostgreSQL, an S3 store, and a `~/.config/latte/app/config.properties`). The full,
+step-by-step setup — FusionAuth kickstart, Postgres + jOOQ codegen, R2/MinIO, and GitHub OAuth — lives in
 [`CLAUDE.md`](CLAUDE.md).
 
 ## Project layout
@@ -42,13 +44,13 @@ src/main/java/org/lattejava/app/
   controller/   HTTP handlers (browser pages + the publish API)
   service/      business logic (singletons; validation in service/validation)
   security/     auth middleware (GroupSecurity, HasRole, PublishAuthorizer)
-  db/           Cloudflare D1 client
+  db/           jOOQ-backed DatabaseService + generated classes (db/jooq)
   s3/           S3-compatible client + AWS SigV4 signer (R2 / MinIO / AWS)
   model/        immutable domain + view records
   middleware/   exception handlers (HTML for the UI, JSON for the API)
 web/            JTE templates, components, and static assets
 src/main/fusionauth/   FusionAuth docker-compose + kickstart
-migrations/     D1 schema migrations
+src/main/sql/   PostgreSQL schema.sql + seed.sql (source of truth for jOOQ codegen)
 docs/           design specs (docs/design) and implementation plans (docs/implementation)
 ```
 

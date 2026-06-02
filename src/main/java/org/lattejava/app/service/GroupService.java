@@ -15,20 +15,20 @@ import org.lattejava.web.Configuration;
 
 public class GroupService {
   private static final SecureRandom SECURE_RANDOM = new SecureRandom();
-  private final DatabaseClient databaseClient;
+  private final DatabaseService databaseService;
   private final S3Client s3Client;
   private final GroupValidator validator;
 
   public GroupService(Configuration config) {
-    this(config, new GroupValidator(config), new S3HttpClient(config));
+    this(Services.databaseService(), new GroupValidator(config), new S3HttpClient(config));
   }
 
   /**
    * Test-only constructor. Production code should use the {@link #GroupService(Configuration)}
    * constructor instead.
    */
-  public GroupService(Configuration config, GroupValidator validator, S3Client s3Client) {
-    this.databaseClient = new DatabaseClient(config);
+  public GroupService(DatabaseService databaseService, GroupValidator validator, S3Client s3Client) {
+    this.databaseService = databaseService;
     this.s3Client = s3Client;
     this.validator = validator;
   }
@@ -63,14 +63,14 @@ public class GroupService {
       case REVERSE_DNS_GITHUB -> new Group(input.name(), input.description(), GroupState.PENDING, null, now, null);
       case SHORT_NAME -> new Group(input.name(), input.description(), GroupState.VERIFIED, null, now, now);
     };
-    databaseClient.insertGroup(group);
+    databaseService.insertGroup(group);
 
     if (kind == GroupKind.REVERSE_DNS) {
-      databaseClient.insertVerification(new GroupVerification(input.name(), now, now));
+      databaseService.insertVerification(new GroupVerification(input.name(), now, now));
     }
 
     Member ownership = new Member(input.name(), creator.userId(), Role.OWNER, MembershipState.ACTIVE, null, null, now);
-    databaseClient.insertMember(ownership);
+    databaseService.insertMember(ownership);
 
     return group;
   }
@@ -94,11 +94,11 @@ public class GroupService {
     if (!errors.empty()) {
       throw new ValidationException(errors);
     }
-    databaseClient.deleteGroup(group.name());
+    databaseService.deleteGroup(group.name());
   }
 
   public Optional<Group> findGroup(String name) {
-    return databaseClient.findGroup(name);
+    return databaseService.findGroup(name);
   }
 
   /**
@@ -125,7 +125,7 @@ public class GroupService {
         candidates.add(String.join(".", Arrays.copyOfRange(segments, 0, i)));
       }
     }
-    return databaseClient.findOwningGroup(candidates);
+    return databaseService.findOwningGroup(candidates);
   }
 
   public List<Group> listForUser(User user) {
@@ -143,7 +143,7 @@ public class GroupService {
    */
   public List<Group> listForUser(User user, String filter) {
     String normalized = (filter == null || filter.isBlank()) ? null : filter.trim().toLowerCase(Locale.ROOT);
-    return databaseClient.listGroupsForUser(user.userId(), normalized);
+    return databaseService.listGroupsForUser(user.userId(), normalized);
   }
 
   /**
@@ -161,6 +161,6 @@ public class GroupService {
       throw new ValidationException(errors);
     }
     String normalized = description == null ? "" : description.trim();
-    databaseClient.updateGroupDescription(group.name(), normalized);
+    databaseService.updateGroupDescription(group.name(), normalized);
   }
 }

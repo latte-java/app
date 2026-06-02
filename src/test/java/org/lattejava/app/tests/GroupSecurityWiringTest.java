@@ -119,15 +119,8 @@ public class GroupSecurityWiringTest extends BaseTest {
     request(method, "/app/groups/" + NON_MEMBER_GROUP + suffix).assertRedirect(303, "/app/");
   }
 
-  @AfterClass
-  public void wiringAfterClass() {
-    db.deleteGroup(NON_MEMBER_GROUP);
-    db.deleteGroup(CONTRIBUTOR_GROUP);
-    db.deleteGroup(PENDING_GROUP);
-  }
-
-  @BeforeClass
-  public void wiringBeforeClass() {
+  @BeforeMethod
+  public void wiringBeforeMethod() {
     db.insertGroup(new Group(NON_MEMBER_GROUP, "", GroupState.VERIFIED, null, Instant.now(), Instant.now()));
     db.insertGroup(new Group(CONTRIBUTOR_GROUP, "", GroupState.VERIFIED, null, Instant.now(), Instant.now()));
     db.insertGroup(new Group(PENDING_GROUP, "", GroupState.VERIFIED, null, Instant.now(), Instant.now()));

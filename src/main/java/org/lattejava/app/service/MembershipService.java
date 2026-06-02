@@ -18,26 +18,34 @@ public class MembershipService {
   private static final UUID APPLICATION_ID = UUID.fromString("e9fdb985-9173-4e01-9d73-ac2d60d1dc8e");
   private static final UUID INVITE_TEMPLATE_ID = UUID.fromString("a4db4962-efd8-476d-af15-932567f337b8");
   private static final System.Logger LOG = System.getLogger(MembershipService.class.getName());
-  private final DatabaseClient databaseClient;
+  private final DatabaseService databaseService;
   private final FusionAuthClient fusionAuth;
   private final MembershipValidator validator;
 
   public MembershipService(Configuration config) {
-    this.databaseClient = new DatabaseClient(config);
+    this(Services.databaseService(), config);
+  }
+
+  /**
+   * Test-only constructor. Production code should use the {@link #MembershipService(Configuration)}
+   * constructor instead.
+   */
+  public MembershipService(DatabaseService databaseService, Configuration config) {
+    this.databaseService = databaseService;
     this.fusionAuth = new FusionAuthClient(
         config.get("fusionauth.apiKey"),
         config.get("fusionauth.baseUrl")
     );
-    this.validator = new MembershipValidator(config);
+    this.validator = new MembershipValidator(databaseService);
   }
 
   public void acceptInvitation(String groupName, UUID userId) {
-    Optional<Member> member = databaseClient.findMember(groupName, userId);
+    Optional<Member> member = databaseService.findMember(groupName, userId);
     if (member.isEmpty() || member.get().state() != MembershipState.PENDING) {
       return;
     }
 
-    databaseClient.updateMemberState(groupName, userId, MembershipState.ACTIVE, Instant.now());
+    databaseService.updateMemberState(groupName, userId, MembershipState.ACTIVE, Instant.now());
   }
 
   public void changeRole(String groupName, UUID targetUserId, Role newRole, User current) {
@@ -46,16 +54,16 @@ public class MembershipService {
       throw new ValidationException(errors);
     }
 
-    databaseClient.updateMemberRole(groupName, targetUserId, newRole);
+    databaseService.updateMemberRole(groupName, targetUserId, newRole);
   }
 
   public void declineInvitation(String groupName, UUID userId) {
-    Optional<Member> member = databaseClient.findMember(groupName, userId);
+    Optional<Member> member = databaseService.findMember(groupName, userId);
     if (member.isEmpty() || member.get().state() != MembershipState.PENDING) {
       return;
     }
 
-    databaseClient.deleteMember(groupName, userId);
+    databaseService.deleteMember(groupName, userId);
   }
 
   /**
@@ -68,7 +76,7 @@ public class MembershipService {
    * @return The enriched member, or empty if no row exists.
    */
   public Optional<Member> findEnrichedMember(String groupName, UUID userId) {
-    Optional<Member> memberOpt = databaseClient.findMember(groupName, userId);
+    Optional<Member> memberOpt = databaseService.findMember(groupName, userId);
     if (memberOpt.isEmpty()) {
       return memberOpt;
     }
@@ -87,7 +95,7 @@ public class MembershipService {
   }
 
   public Optional<Member> findMember(String groupName, UUID userId) {
-    return databaseClient.findMember(groupName, userId);
+    return databaseService.findMember(groupName, userId);
   }
 
   public Member invite(InviteRequest request, User inviter) {
@@ -141,7 +149,7 @@ public class MembershipService {
         now,
         null
     );
-    databaseClient.insertMember(member);
+    databaseService.insertMember(member);
     return member;
   }
 
@@ -151,11 +159,11 @@ public class MembershipService {
       throw new ValidationException(errors);
     }
 
-    databaseClient.deleteMember(groupName, current.userId());
+    databaseService.deleteMember(groupName, current.userId());
   }
 
   public List<Member> listMembers(String groupName) {
-    List<Member> members = databaseClient.listMembers(groupName);
+    List<Member> members = databaseService.listMembers(groupName);
     if (members.isEmpty()) {
       return members;
     }
@@ -191,6 +199,6 @@ public class MembershipService {
       throw new ValidationException(errors);
     }
 
-    databaseClient.deleteMember(groupName, targetUserId);
+    databaseService.deleteMember(groupName, targetUserId);
   }
 }

@@ -12,18 +12,18 @@ import org.lattejava.web.*;
 
 public class MembershipValidator {
   private static final Pattern EMAIL_PATTERN = Pattern.compile("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$");
-  private final DatabaseClient databaseClient;
+  private final DatabaseService databaseService;
 
   public MembershipValidator(Configuration config) {
-    this(new DatabaseClient(config));
+    this(Services.databaseService());
   }
 
   /**
    * Test-only constructor. Production code should use the {@link #MembershipValidator(Configuration)} constructor
    * instead.
    */
-  public MembershipValidator(DatabaseClient databaseClient) {
-    this.databaseClient = databaseClient;
+  public MembershipValidator(DatabaseService databaseService) {
+    this.databaseService = databaseService;
   }
 
   public Errors validateChangeRole(String groupName, UUID targetUserId, Role newRole, User current) {
@@ -33,13 +33,13 @@ public class MembershipValidator {
       return errors;
     }
 
-    Optional<Member> target = databaseClient.findMember(groupName, targetUserId);
+    Optional<Member> target = databaseService.findMember(groupName, targetUserId);
     if (target.isEmpty()) {
       return errors;
     }
 
     if (target.get().role() == Role.OWNER && target.get().state() == MembershipState.ACTIVE && newRole != Role.OWNER) {
-      List<Member> owners = databaseClient.findActiveOwners(groupName);
+      List<Member> owners = databaseService.findActiveOwners(groupName);
       if (owners.size() <= 1) {
         errors.addGeneralError("[lastOwner]group", "Cannot demote the last active OWNER of the group [%s].", groupName);
       }
@@ -75,13 +75,13 @@ public class MembershipValidator {
 
   public Errors validateLeave(String groupName, User current) {
     Errors errors = new Errors();
-    Optional<Member> member = databaseClient.findMember(groupName, current.userId());
+    Optional<Member> member = databaseService.findMember(groupName, current.userId());
     if (member.isEmpty()) {
       return errors;
     }
 
     if (member.get().role() == Role.OWNER && member.get().state() == MembershipState.ACTIVE) {
-      List<Member> owners = databaseClient.findActiveOwners(groupName);
+      List<Member> owners = databaseService.findActiveOwners(groupName);
       if (owners.size() <= 1) {
         errors.addGeneralError("[lastOwner]group", "Cannot leave the group [%s] as the last active OWNER.", groupName);
       }
@@ -92,7 +92,7 @@ public class MembershipValidator {
 
   public Errors validateNoDuplicateMembership(String groupName, UUID userId, String email) {
     Errors errors = new Errors();
-    if (databaseClient.findMember(groupName, userId).isPresent()) {
+    if (databaseService.findMember(groupName, userId).isPresent()) {
       errors.addFieldError("email", "[alreadyInvited]email", "[%s] is already a member or has a pending invitation.", email);
     }
 
@@ -106,13 +106,13 @@ public class MembershipValidator {
       return errors;
     }
 
-    Optional<Member> target = databaseClient.findMember(groupName, targetUserId);
+    Optional<Member> target = databaseService.findMember(groupName, targetUserId);
     if (target.isEmpty()) {
       return errors;
     }
 
     if (target.get().role() == Role.OWNER && target.get().state() == MembershipState.ACTIVE) {
-      List<Member> owners = databaseClient.findActiveOwners(groupName);
+      List<Member> owners = databaseService.findActiveOwners(groupName);
       if (owners.size() <= 1) {
         errors.addGeneralError("[lastOwner]group", "Cannot remove the last active OWNER of the group [%s].", groupName);
       }

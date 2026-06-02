@@ -4,14 +4,17 @@
  */
 module org.lattejava.app {
   requires com.fasterxml.jackson.databind;
+  requires com.zaxxer.hikari;
   requires fusionauth.java.client;
   requires gg.jte;
   requires gg.jte.runtime;
   requires java.naming;
   requires java.net.http;
+  requires org.jooq;
   requires org.lattejava.http;
   requires org.lattejava.jwt;
   requires org.lattejava.web;
+  requires org.postgresql.jdbc;
   requires restify;
 
   exports org.lattejava.app;
@@ -27,4 +30,7 @@ module org.lattejava.app {
   exports org.lattejava.app.service.dns;
   exports org.lattejava.app.service.validation;
   exports org.lattejava.app.util;
+
+  // jOOQ reflectively instantiates the generated table-record classes.
+  opens org.lattejava.app.db.jooq.tables.records to org.jooq;
 }

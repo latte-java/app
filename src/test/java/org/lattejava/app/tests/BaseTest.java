@@ -11,12 +11,17 @@ import module org.lattejava.web;
 import module org.testng;
 
 import com.inversoft.rest.*;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
+import java.sql.Statement;
 import org.lattejava.app.Main;
+import org.lattejava.app.db.DatabaseService;
+import org.lattejava.app.model.Group;
 import org.lattejava.app.model.Member;
 
-@Test
 public abstract class BaseTest {
-  public static DatabaseClient db;
+  public static DatabaseService db;
   public static Main main;
   public static OIDCTestFixture oidc;
   public static OIDCTestFixture oidcForAPI;
@@ -32,11 +37,20 @@ public abstract class BaseTest {
   public static void beforeSuite() {
     main = new Main(8081);
     main.main();
-    db = new DatabaseClient(main.config);
+    db = Services.databaseService();
     oidc = new OIDCTestFixture(test, main.ssrConfig);
     oidcForAPI = new OIDCTestFixture(test, main.apiConfig);
 
-    resetAndSeedDatabase();
+    // Discover the FA test user UUID once; the per-method reset re-seeds the OWNER membership with it.
+    FusionAuthClient fa = new FusionAuthClient(
+        main.config.get("fusionauth.apiKey"),
+        main.config.get("fusionauth.baseUrl")
+    );
+    ClientResponse<UserResponse, ?> userResponse = fa.retrieveUserByEmail("test@lattejava.org");
+    if (!userResponse.wasSuccessful() || userResponse.successResponse.user == null) {
+      throw new IllegalStateException("FA test user not found - is FusionAuth running with kickstart applied?");
+    }
+    testUserId = userResponse.successResponse.user.id;
   }
 
   /**
@@ -44,55 +58,36 @@ public abstract class BaseTest {
    * {@link org.lattejava.app.security.GroupSecurity} middleware on owner-only routes (settings, verify, delete, invite,
    * role/remove).
    */
-  @Test(enabled = false)
   public static void insertTestUserAsOwner(String groupName) {
     db.insertMember(new Member(groupName, testUserId, Role.OWNER, MembershipState.ACTIVE, null, null, Instant.now()));
   }
 
   private static void resetAndSeedDatabase() {
-    DatabaseClient db = new DatabaseClient(main.config);
-    // Explicit deletes in dependency order. Not relying on FK CASCADE so the
-    // order is visible and intentional.
-    db.query("DELETE FROM group_verifications");
-    db.query("DELETE FROM members");
-    db.query("DELETE FROM groups");
-
-    // Re-insert the reserved group (the migration would have, but DELETE wiped it).
-    db.query(
-        "INSERT INTO groups (name, description, state, verification_code, created_at, verified_at) VALUES (?, ?, ?, ?, ?, ?)",
-        "org.lattejava",
-        "Reserved group for the Latte Java project.",
-        "VERIFIED",
-        null,
-        1714867200000L,
-        1714867200000L
-    );
-
-    // Discover the FA test user UUID and seed an OWNER membership.
-    FusionAuthClient fa = new FusionAuthClient(
-        main.config.get("fusionauth.apiKey"),
-        main.config.get("fusionauth.baseUrl")
-    );
-
-    ClientResponse<UserResponse, ?> userResponse = fa.retrieveUserByEmail("test@lattejava.org");
-    if (!userResponse.wasSuccessful() || userResponse.successResponse.user == null) {
-      throw new IllegalStateException("FA test user not found - is FusionAuth running with kickstart applied?");
+    // Wipe all rows in dependency order (child tables first), via a raw connection — DatabaseService
+    // intentionally exposes no bulk-delete on its production API.
+    try (Connection c = DriverManager.getConnection(
+             main.config.get("db.url"), main.config.get("db.username"), main.config.get("db.password"));
+         Statement s = c.createStatement()) {
+      s.execute("DELETE FROM members");
+      s.execute("DELETE FROM group_verifications");
+      s.execute("DELETE FROM groups");
+    } catch (SQLException e) {
+      throw new IllegalStateException("Failed to reset the test database", e);
     }
-    testUserId = userResponse.successResponse.user.id;
-    db.query(
-        "INSERT INTO members (group_name, user_id, role, state, invited_by, invited_at, joined_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
-        "org.lattejava",
-        testUserId.toString(),
-        "OWNER",
-        "ACTIVE",
-        null,
-        null,
-        1714867200000L
-    );
+
+    // Re-seed the reserved group and the FA test user as its OWNER.
+    Instant seedTime = Instant.ofEpochMilli(1714867200000L);
+    db.insertGroup(new Group("org.lattejava", "Reserved group for the Latte Java project.", GroupState.VERIFIED, null, seedTime, seedTime));
+    db.insertMember(new Member("org.lattejava", testUserId, Role.OWNER, MembershipState.ACTIVE, null, null, seedTime));
   }
 
   @AfterMethod
   public void afterMethod() {
     oidc.logout();
+  }
+
+  @BeforeMethod
+  public void beforeMethod() {
+    resetAndSeedDatabase();
   }
 }

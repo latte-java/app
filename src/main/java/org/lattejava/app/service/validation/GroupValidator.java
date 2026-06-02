@@ -11,19 +11,19 @@ import org.lattejava.web.Configuration;
 
 public class GroupValidator {
   private static final Pattern SEGMENT_PATTERN = Pattern.compile("[a-z0-9]([a-z0-9-]*[a-z0-9])?");
-  private final DatabaseClient databaseClient;
+  private final DatabaseService databaseService;
   private final TLDList tlds;
 
   public GroupValidator(Configuration config) {
-    this(new DatabaseClient(config), TLDList.fromIana());
+    this(Services.databaseService(), TLDList.fromIana());
   }
 
   /**
    * Test-only constructor. Production code should use the {@link #GroupValidator(Configuration)}
    * constructor instead.
    */
-  public GroupValidator(DatabaseClient databaseClient, TLDList tlds) {
-    this.databaseClient = databaseClient;
+  public GroupValidator(DatabaseService databaseService, TLDList tlds) {
+    this.databaseService = databaseService;
     this.tlds = tlds;
   }
 
@@ -96,12 +96,12 @@ public class GroupValidator {
           "The group name [%s] is a top-level domain (TLD). Short group names cannot be bare TLDs; use a reverse-DNS name such as [%s.yourorg] instead.", name, name);
     }
 
-    if (structureValid && databaseClient.findGroup(name).isPresent()) {
+    if (structureValid && databaseService.findGroup(name).isPresent()) {
       errors.addFieldError("name", "[duplicate]name", "A group named [%s] already exists.", name);
     }
 
     if (structureValid && segments.length > 1) {
-      Optional<Group> ancestor = databaseClient.findAncestorGroup(name);
+      Optional<Group> ancestor = databaseService.findAncestorGroup(name);
       ancestor.ifPresent(value -> errors.addFieldError("name", "[ancestorConflict]name",
           "The existing group [%s] already covers [%s]. Subgroups are implicit and cannot be created separately.", value.name(), name));
     }

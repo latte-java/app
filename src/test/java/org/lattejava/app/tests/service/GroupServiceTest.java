@@ -19,7 +19,7 @@ import static org.testng.Assert.*;
 @Test
 public class GroupServiceTest {
   public Configuration config;
-  public DatabaseClient client;
+  public DatabaseService client;
   public GroupService service;
   public GroupValidator validator;
 
@@ -30,15 +30,15 @@ public class GroupServiceTest {
   @BeforeClass
   public void beforeClass() {
     config = new Configuration(
-        List.of("d1.accountId", "d1.apiToken", "d1.baseUrl", "d1.databaseId",
+        List.of("db.password", "db.url", "db.username",
             "s3.accessKeyId", "s3.bucket", "s3.endpoint", "s3.region", "s3.secretAccessKey"),
         Path.of(System.getProperty("user.home"), ".config", "latte", "app", "config.properties"),
         Path.of("src/test/resources/config.properties")
     );
-    client = new DatabaseClient(config);
+    client = new DatabaseService(config);
     TLDList tlds = new TLDList(Set.of("org", "com", "io", "dev", "net"));
     validator = new GroupValidator(client, tlds);
-    service = new GroupService(config, validator, new org.lattejava.app.s3.S3HttpClient(config));
+    service = new GroupService(client, validator, new org.lattejava.app.s3.S3HttpClient(config));
   }
 
   @Test
@@ -123,7 +123,7 @@ public class GroupServiceTest {
         throw new UnsupportedOperationException("not used in this test");
       }
     };
-    GroupService localService = new GroupService(config, validator, fakeS3);
+    GroupService localService = new GroupService(client, validator, fakeS3);
     try {
       expectThrows(ValidationException.class, () -> localService.delete(g));
     } finally {
@@ -148,7 +148,7 @@ public class GroupServiceTest {
         throw new UnsupportedOperationException("not used in this test");
       }
     };
-    GroupService localService = new GroupService(config, validator, fakeS3);
+    GroupService localService = new GroupService(client, validator, fakeS3);
     try {
       localService.delete(g);
       assertFalse(client.findGroup("test.delete.empty").isPresent());

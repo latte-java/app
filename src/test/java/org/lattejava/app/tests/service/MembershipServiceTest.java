@@ -20,7 +20,7 @@ import static org.testng.Assert.*;
 @SuppressWarnings("OptionalGetWithoutIsPresent")
 @Test
 public class MembershipServiceTest {
-  public DatabaseClient client;
+  public DatabaseService client;
   public Configuration config;
   public MembershipService service;
 
@@ -60,13 +60,13 @@ public class MembershipServiceTest {
   @BeforeClass
   public void beforeClass() {
     config = new Configuration(
-        List.of("d1.accountId", "d1.apiToken", "d1.baseUrl", "d1.databaseId",
+        List.of("db.password", "db.url", "db.username",
             "fusionauth.apiKey", "fusionauth.baseUrl"),
         Path.of(System.getProperty("user.home"), ".config", "latte", "app", "config.properties"),
         Path.of("src/test/resources/config.properties")
     );
-    client = new DatabaseClient(config);
-    service = new MembershipService(config);
+    client = new DatabaseService(config);
+    service = new MembershipService(client, config);
   }
 
   @Test
@@ -214,10 +214,8 @@ public class MembershipServiceTest {
     FusionAuthClient fa = new FusionAuthClient(config.get("fusionauth.apiKey"), config.get("fusionauth.baseUrl"));
     UUID testUserId = fa.retrieveUserByEmail("test@lattejava.org").successResponse.user.id;
 
-    client.query("DELETE FROM members WHERE group_name = ?", "test.enrich.fixture");
-    client.query("DELETE FROM groups WHERE name = ?", "test.enrich.fixture");
-    client.query("INSERT INTO groups (name, description, state, verification_code, created_at, verified_at) VALUES (?, ?, ?, ?, ?, ?)",
-        "test.enrich.fixture", "Enrich fixture", "VERIFIED", null, 1L, 1L);
+    client.deleteGroup("test.enrich.fixture"); // cascades to members
+    client.insertGroup(new Group("test.enrich.fixture", "Enrich fixture", GroupState.VERIFIED, null, Instant.ofEpochMilli(1L), Instant.ofEpochMilli(1L)));
     client.insertMember(new Member("test.enrich.fixture", testUserId, Role.OWNER, MembershipState.ACTIVE, null, null, Instant.ofEpochMilli(1L)));
 
     try {

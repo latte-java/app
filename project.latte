@@ -5,6 +5,13 @@
 project(group: "org.lattejava", name: "app", version: "0.1.0", licenses: ["MIT"]) {
   workflow {
     standard()
+
+    // jOOQ declares Maven dependencies with non-semantic versions (io.r2dbc:r2dbc-spi + its parent POM).
+    // jOOQ's module-info `requires` r2dbc.spi, so it must be present; these mappings let Latte resolve it.
+    semanticVersions {
+      mapping(id: "io.r2dbc:r2dbc-spi:1.0.0.RELEASE", version: "1.0.0")
+      mapping(id: "io.r2dbc:r2dbc-spi-parent:1.0.0.RELEASE", version: "1.0.0")
+    }
   }
 
   publishWorkflow {
@@ -25,6 +32,29 @@ project(group: "org.lattejava", name: "app", version: "0.1.0", licenses: ["MIT"]
       dependency(id: "org.lattejava:http:0.1.5")
       dependency(id: "org.lattejava:jwt:0.1.0")
       dependency(id: "org.lattejava:web:0.3.0")
+      dependency(id: "org.jooq:jooq:3.21.4")
+      // jOOQ's module-info `requires static` these, so javac needs them on the compile module-path (verified:
+      // moving them to a runtime group fails compilation). They are not transitively resolved (optional in
+      // jOOQ's POM) and tiny (~30 KB each). Must be `compile`; Latte's compile path is fed only by that group.
+      dependency(id: "io.r2dbc:r2dbc-spi:1.0.0.RELEASE")
+      dependency(id: "org.reactivestreams:reactive-streams:1.0.4")
+      dependency(id: "com.zaxxer:HikariCP:7.0.2")
+      dependency(id: "org.postgresql:postgresql:42.7.11")
+    }
+    // Build-only jOOQ code-generation tooling. Never compiled into the app or bundled; assembled into a
+    // classpath only by the `codegen` target below.
+    group(name: "codegen", export: false) {
+      dependency(id: "org.jooq:jooq-codegen:3.21.4")
+      dependency(id: "org.jooq:jooq-meta:3.21.4")
+      dependency(id: "org.jooq:jooq:3.21.4")
+      dependency(id: "org.postgresql:postgresql:42.7.11")
+      // jOOQ marks these <optional> in its POM, so they are NOT pulled transitively (verified). The
+      // codegen tool needs them at runtime: JAXB (+ activation) to parse the config, and r2dbc-spi +
+      // reactive-streams for jOOQ's converter context. Build-only — the app bundle still excludes r2dbc.
+      dependency(id: "jakarta.xml.bind:jakarta.xml.bind-api:4.0.2")
+      dependency(id: "jakarta.activation:jakarta.activation-api:2.1.3") // jakarta.xml.bind requires it on the module path
+      dependency(id: "org.reactivestreams:reactive-streams:1.0.4")
+      dependency(id: "io.r2dbc:r2dbc-spi:1.0.0.RELEASE")
     }
     group(name: "test-compile", export: false) {
       dependency(id: "org.testng:testng:7.12.0")
@@ -37,6 +67,7 @@ project(group: "org.lattejava", name: "app", version: "0.1.0", licenses: ["MIT"]
 }
 
 // Plugins
+database = loadPlugin(id: "org.lattejava.plugin:database:0.4.0")
 dependency = loadPlugin(id: "org.lattejava.plugin:dependency:0.4.0")
 file = loadPlugin(id: "org.lattejava.plugin:file:0.4.0")
 idea = loadPlugin(id: "org.lattejava.plugin:idea:0.4.0")
@@ -72,6 +103,37 @@ target(name: "run", description: "Runs the web server", dependsOn: ["build"]) {
   java.run(main: "org.lattejava.app.Main")
 }
 
+target(name: "database", description: "Creates/recreates the main and/or test databases and loads the schema. Use --type=main,test (defaults to both).") {
+  database.settings.type = "postgresql"
+
+  def requested = switches.has("type") ? switches.values("type").collectMany { it.split(",") as List }*.trim() : ["main", "test"]
+
+  if (requested.contains("main")) {
+    database.createMainDatabase()                         // drops + recreates `app`, creates/grants the `dev` role
+    database.execute(file: "src/main/sql/schema.sql")
+    database.execute(file: "src/main/sql/seed.sql")
+  }
+  if (requested.contains("test")) {
+    database.createTestDatabase()                         // drops + recreates `app_test`
+    database.execute(file: "src/main/sql/schema.sql")     // no seed: the test fixture seeds its own baseline per-method
+  }
+}
+
+target(name: "codegen", description: "Generates the jOOQ classes from the live `app` database (run `database --type=main` first)") {
+  // jOOQ's standalone GenerationTool introspects the live `app` database and writes sources into
+  // src/main/java/org/lattejava/app/db/jooq (configured in src/main/jooq/codegen.xml). It runs off the
+  // build-only `codegen` dependency group (the tool + driver), never the app's compile/runtime path.
+  // jOOQ runs on the module path here. Its `requires static` optionals (JAXB for config parsing,
+  // r2dbc/reactive-streams for the converter context) aren't auto-resolved, so add them; and its config
+  // unmarshaller reflects from org.jooq into org.jooq.meta.jaxb, which needs an explicit opens.
+  java.run(
+      main: "org.jooq.codegen.GenerationTool",
+      arguments: "src/main/jooq/codegen.xml",
+      jvmArguments: "--add-modules jakarta.xml.bind,r2dbc.spi,org.reactivestreams --add-opens org.jooq.meta/org.jooq.meta.jaxb=org.jooq",
+      dependencies: [[group: "codegen", transitive: true, fetchSource: false, transitiveGroups: ["compile", "runtime"]]]
+  )
+}
+
 target(name: "int", description: "Releases a local integration build of the project", dependsOn: ["test"]) {
   dependency.integrate()
 }
@@ -104,9 +166,7 @@ target(name: "bundle", description: "Builds a runnable bundle into `build/bundle
 }
 
 target(name: "deploy", description: "Builds the bundle and deploys the app to Cloudflare (Worker + container)", dependsOn: ["bundle"]) {
-  // --env= explicitly targets the top-level (production) environment. The [env.dev] block exists only
-  // for local dev D1 migrations, so without this wrangler warns about an ambiguous target environment.
-  exec(["npx", "wrangler", "deploy", "--env="])
+  exec(["npx", "wrangler", "deploy"])
 }
 
 target(name: "tailwind", description: "Installs Tailwind CSS via npm (if needed) and runs it in watch mode against web/**/*.jte") {

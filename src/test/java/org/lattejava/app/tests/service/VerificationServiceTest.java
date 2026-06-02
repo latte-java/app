@@ -16,20 +16,20 @@ import static org.testng.Assert.*;
 @SuppressWarnings("OptionalGetWithoutIsPresent")
 @Test
 public class VerificationServiceTest {
-  public DatabaseClient client;
+  public DatabaseService client;
   public FakeDNSResolver resolver;
   public VerificationService service;
 
   @BeforeClass
   public void beforeClass() {
     Configuration config = new Configuration(
-        List.of("d1.accountId", "d1.apiToken", "d1.baseUrl", "d1.databaseId"),
+        List.of("db.password", "db.url", "db.username"),
         Path.of(System.getProperty("user.home"), ".config", "latte", "app", "config.properties"),
         Path.of("src/test/resources/config.properties")
     );
-    client = new DatabaseClient(config);
+    client = new DatabaseService(config);
     resolver = new FakeDNSResolver();
-    service = new VerificationService(config, resolver, new GitHubHTTPClient());
+    service = new VerificationService(client, config, resolver, new GitHubHTTPClient());
   }
 
   @Test

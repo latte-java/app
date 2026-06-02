@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  jOOQ code-generation configuration. Run via the `codegen` build target, which introspects the live
+  local `app` database (loaded by the `database` target) and writes typed classes into the
+  org.lattejava.app.db.jooq package.
+
+  All four forced types use lambda converters so the generator emits the conversions inline and never
+  needs the app's classes (model enums / a converter class) on its classpath — this avoids the jOOQ
+  bootstrap problem where generated code is required to compile the very classes the generator depends on.
+
+    * BIGINT epoch-millis  <-> java.time.Instant
+    * TEXT                 <-> GroupState / Role / MembershipState  (stored as the enum name())
+-->
+<configuration xmlns="http://www.jooq.org/xsd/jooq-codegen-3.0.0.xsd">
+  <jdbc>
+    <driver>org.postgresql.Driver</driver>
+    <url>jdbc:postgresql://127.0.0.1:5432/app</url>
+    <user>dev</user>
+    <password>dev</password>
+  </jdbc>
+
+  <generator>
+    <database>
+      <name>org.jooq.meta.postgres.PostgresDatabase</name>
+      <inputSchema>public</inputSchema>
+      <includes>.*</includes>
+
+      <forcedTypes>
+        <!-- All epoch-millis BIGINT timestamp columns -> Instant. -->
+        <forcedType>
+          <userType>java.time.Instant</userType>
+          <lambdaConverter>
+            <from>t -&gt; t == null ? null : java.time.Instant.ofEpochMilli(t)</from>
+            <to>u -&gt; u == null ? null : u.toEpochMilli()</to>
+          </lambdaConverter>
+          <includeExpression>.*\.(created_at|verified_at|invited_at|joined_at|started_at|last_checked_at)</includeExpression>
+        </forcedType>
+
+        <!-- groups.state -> GroupState -->
+        <forcedType>
+          <userType>org.lattejava.app.model.GroupState</userType>
+          <lambdaConverter>
+            <from>t -&gt; t == null ? null : org.lattejava.app.model.GroupState.valueOf(t)</from>
+            <to>u -&gt; u == null ? null : u.name()</to>
+          </lambdaConverter>
+          <includeExpression>.*\.groups\.state</includeExpression>
+        </forcedType>
+
+        <!-- members.role -> Role -->
+        <forcedType>
+          <userType>org.lattejava.app.model.Role</userType>
+          <lambdaConverter>
+            <from>t -&gt; t == null ? null : org.lattejava.app.model.Role.valueOf(t)</from>
+            <to>u -&gt; u == null ? null : u.name()</to>
+          </lambdaConverter>
+          <includeExpression>.*\.members\.role</includeExpression>
+        </forcedType>
+
+        <!-- members.state -> MembershipState -->
+        <forcedType>
+          <userType>org.lattejava.app.model.MembershipState</userType>
+          <lambdaConverter>
+            <from>t -&gt; t == null ? null : org.lattejava.app.model.MembershipState.valueOf(t)</from>
+            <to>u -&gt; u == null ? null : u.name()</to>
+          </lambdaConverter>
+          <includeExpression>.*\.members\.state</includeExpression>
+        </forcedType>
+      </forcedTypes>
+    </database>
+
+    <generate>
+      <pojos>false</pojos>
+      <daos>false</daos>
+      <interfaces>false</interfaces>
+      <javadoc>true</javadoc>
+    </generate>
+
+    <target>
+      <packageName>org.lattejava.app.db.jooq</packageName>
+      <directory>src/main/java</directory>
+      <clean>true</clean>
+    </target>
+  </generator>
+</configuration>

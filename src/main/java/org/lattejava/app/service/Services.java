@@ -6,10 +6,13 @@ package org.lattejava.app.service;
 
 import module org.lattejava.web;
 
+import org.lattejava.app.db.DatabaseService;
+
 /**
  * A simple service registry.
  */
 public class Services {
+  private static DatabaseService databaseService;
   private static GroupService groupService;
   private static MembershipService membershipService;
   private static PublishService publishService;
@@ -17,11 +20,17 @@ public class Services {
   private static VerificationService verificationService;
   private static ViewService viewService;
 
+  public static DatabaseService databaseService() {
+    return databaseService;
+  }
+
   public static GroupService groupService() {
     return groupService;
   }
 
   public static void initialize(Configuration config) {
+    // The database service owns the connection pool + jOOQ context and must exist before any service that uses it.
+    databaseService = new DatabaseService(config);
     groupService = new GroupService(config);
     membershipService = new MembershipService(config);
     publishService = new PublishService(config);
@@ -47,6 +56,7 @@ public class Services {
 
   public static void shutdown() {
     verificationService.shutdown();
+    databaseService.close();
   }
 
   public static VerificationService verificationService() {
