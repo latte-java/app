@@ -76,6 +76,7 @@ javaTestNG = loadPlugin(id: "org.lattejava.plugin:java-testng:0.4.0")
 release = loadPlugin(id: "org.lattejava.plugin:release-git:0.4.0")
 
 // Plugin settings
+database.settings.type = "postgresql"
 java.settings.javaVersion = "25"
 javaTestNG.settings.javaVersion = "25"
 
@@ -95,7 +96,7 @@ target(name: "build", description: "Compiles the project, JARs it, and compiles 
   exec(["npx", "@tailwindcss/cli", "-i", "src/main/css/app.css", "-o", "web/static/css/app.css"])
 }
 
-target(name: "test", description: "Runs the project's tests", dependsOn: ["build"]) {
+target(name: "test", description: "Runs the project's tests", dependsOn: ["build", "test-database"]) {
   javaTestNG.test()
 }
 
@@ -103,23 +104,18 @@ target(name: "run", description: "Runs the web server", dependsOn: ["build"]) {
   java.run(main: "org.lattejava.app.Main")
 }
 
-target(name: "database", description: "Creates/recreates the main and/or test databases and loads the schema. Use --type=main,test (defaults to both).") {
-  database.settings.type = "postgresql"
-
-  def requested = switches.has("type") ? switches.values("type").collectMany { it.split(",") as List }*.trim() : ["main", "test"]
-
-  if (requested.contains("main")) {
-    database.createMainDatabase()                         // drops + recreates `app`, creates/grants the `dev` role
-    database.execute(file: "src/main/sql/schema.sql")
-    database.execute(file: "src/main/sql/seed.sql")
-  }
-  if (requested.contains("test")) {
-    database.createTestDatabase()                         // drops + recreates `app_test`
-    database.execute(file: "src/main/sql/schema.sql")     // no seed: the test fixture seeds its own baseline per-method
-  }
+target(name: "main-database", description: "Creates/recreates the main databases and loads the schema.") {
+  database.createMainDatabase()
+  database.execute(file: "src/main/sql/schema.sql")
+  database.execute(file: "src/main/sql/seed.sql")
 }
 
-target(name: "codegen", description: "Generates the jOOQ classes from the live `app` database (run `database --type=main` first)") {
+target(name: "test-database", description: "Creates/recreates the test databases and loads the schema.") {
+  database.createTestDatabase()
+  database.execute(file: "src/main/sql/schema.sql")
+}
+
+target(name: "codegen", description: "Generates the jOOQ classes from the live `app` database (run `database --type=main` first)", dependsOn: ["main-database"]) {
   // jOOQ's standalone GenerationTool introspects the live `app` database and writes sources into
   // src/main/java/org/lattejava/app/db/jooq (configured in src/main/jooq/codegen.xml). It runs off the
   // build-only `codegen` dependency group (the tool + driver), never the app's compile/runtime path.

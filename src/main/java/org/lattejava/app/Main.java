@@ -34,14 +34,15 @@ public class Main {
   private final OIDC<User> ssrOIDC;
 
   public Main() {
-    this(8080);
+    this(8080, false);
   }
 
-  public Main(int port) {
+  public Main(int port, boolean test) {
     this.config = new Configuration(
         REQUIRED_CONFIG,
         Path.of(System.getProperty("user.home"), ".config", "latte", "app", "config.properties"),
-        Path.of("src/test/resources/config.properties")
+        test ? Path.of("src/test/resources/config.properties") : Path.of("non-existent"), // A bit of a hack, but fine for now
+        Path.of("src/main/resources/config.properties")
     );
 
     // OIDC setup

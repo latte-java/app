@@ -7,7 +7,7 @@ package org.lattejava.app.tests.s3;
 import module java.base;
 import module org.lattejava.app;
 
-import org.lattejava.web.Configuration;
+import org.lattejava.app.tests.*;
 import org.testng.annotations.*;
 
 import static org.testng.Assert.*;
@@ -19,17 +19,12 @@ import static org.testng.Assert.*;
  * bucket. The presigned-PUT round trip is covered end-to-end through the API by {@code PublishUploadTest}.
  */
 @Test
-public class S3HttpClientTest {
+public class S3HttpClientTest extends BaseTest {
   public S3HttpClient client;
 
   @BeforeClass
   public void beforeClass() {
-    Configuration config = new Configuration(
-        List.of("s3.accessKeyId", "s3.bucket", "s3.endpoint", "s3.region", "s3.secretAccessKey"),
-        Path.of(System.getProperty("user.home"), ".config", "latte", "app", "config.properties"),
-        Path.of("src/test/resources/config.properties")
-    );
-    client = new S3HttpClient(config);
+    client = new S3HttpClient(main.config);
   }
 
   @Test

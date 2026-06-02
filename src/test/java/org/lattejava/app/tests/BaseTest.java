@@ -35,7 +35,7 @@ public abstract class BaseTest {
 
   @BeforeSuite
   public static void beforeSuite() {
-    main = new Main(8081);
+    main = new Main(8081, true);
     main.main();
     db = Services.databaseService();
     oidc = new OIDCTestFixture(test, main.ssrConfig);

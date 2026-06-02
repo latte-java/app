@@ -11,15 +11,14 @@ import java.util.Optional;
 
 import org.lattejava.app.model.Member;
 import org.lattejava.app.s3.S3Client;
-import org.lattejava.web.*;
+import org.lattejava.app.tests.*;
 import org.testng.annotations.*;
 
 import static org.testng.Assert.*;
 
 @Test
-public class GroupServiceTest {
-  public Configuration config;
-  public DatabaseService client;
+public class GroupServiceTest extends BaseTest {
+  public DatabaseService databaseService;
   public GroupService service;
   public GroupValidator validator;
 
@@ -29,16 +28,10 @@ public class GroupServiceTest {
 
   @BeforeClass
   public void beforeClass() {
-    config = new Configuration(
-        List.of("db.password", "db.url", "db.username",
-            "s3.accessKeyId", "s3.bucket", "s3.endpoint", "s3.region", "s3.secretAccessKey"),
-        Path.of(System.getProperty("user.home"), ".config", "latte", "app", "config.properties"),
-        Path.of("src/test/resources/config.properties")
-    );
-    client = new DatabaseService(config);
+    databaseService = new DatabaseService(main.config);
     TLDList tlds = new TLDList(Set.of("org", "com", "io", "dev", "net"));
-    validator = new GroupValidator(client, tlds);
-    service = new GroupService(client, validator, new org.lattejava.app.s3.S3HttpClient(config));
+    validator = new GroupValidator(databaseService, tlds);
+    service = new GroupService(databaseService, validator, new org.lattejava.app.s3.S3HttpClient(main.config));
   }
 
   @Test
@@ -48,10 +41,10 @@ public class GroupServiceTest {
       Group g = service.create(input("io.github.testfixture", ""), creator);
       assertEquals(g.state(), GroupState.PENDING);
       assertNull(g.verificationCode());
-      assertFalse(client.findVerification("io.github.testfixture").isPresent());
-      assertTrue(client.findMember("io.github.testfixture", creator.userId()).isPresent());
+      assertFalse(databaseService.findVerification("io.github.testfixture").isPresent());
+      assertTrue(databaseService.findMember("io.github.testfixture", creator.userId()).isPresent());
     } finally {
-      client.deleteGroup("io.github.testfixture");
+      databaseService.deleteGroup("io.github.testfixture");
     }
   }
 
@@ -76,13 +69,13 @@ public class GroupServiceTest {
       assertNotNull(g.verificationCode());
       assertEquals(g.verificationCode().length(), 32);
       assertNull(g.verifiedAt());
-      assertTrue(client.findVerification("org.testfixture").isPresent());
-      Optional<Member> owner = client.findMember("org.testfixture", creator.userId());
+      assertTrue(databaseService.findVerification("org.testfixture").isPresent());
+      Optional<Member> owner = databaseService.findMember("org.testfixture", creator.userId());
       assertTrue(owner.isPresent());
       assertEquals(owner.get().role(), Role.OWNER);
       assertEquals(owner.get().state(), MembershipState.ACTIVE);
     } finally {
-      client.deleteGroup("org.testfixture");
+      databaseService.deleteGroup("org.testfixture");
     }
   }
 
@@ -95,13 +88,13 @@ public class GroupServiceTest {
       assertEquals(g.state(), GroupState.VERIFIED);
       assertNull(g.verificationCode());
       assertNotNull(g.verifiedAt());
-      assertFalse(client.findVerification("test-short-fixture").isPresent());
-      Optional<Member> owner = client.findMember("test-short-fixture", creator.userId());
+      assertFalse(databaseService.findVerification("test-short-fixture").isPresent());
+      Optional<Member> owner = databaseService.findMember("test-short-fixture", creator.userId());
       assertTrue(owner.isPresent());
       assertEquals(owner.get().role(), Role.OWNER);
       assertEquals(owner.get().state(), MembershipState.ACTIVE);
     } finally {
-      client.deleteGroup("test-short-fixture");
+      databaseService.deleteGroup("test-short-fixture");
     }
   }
 
@@ -109,7 +102,7 @@ public class GroupServiceTest {
   public void delete_bucketNotEmpty_throws() {
     // Role-based authorization is enforced by GroupSecurity middleware at the route layer, not by GroupService.
     Group g = new Group("test.delete.hasartifacts", "", GroupState.VERIFIED, null, Instant.ofEpochMilli(1L), Instant.ofEpochMilli(1L));
-    client.insertGroup(g);
+    databaseService.insertGroup(g);
     S3Client fakeS3 = new S3Client() {
       public boolean isPrefixEmpty(String prefix) {
         return false; // not empty
@@ -123,18 +116,18 @@ public class GroupServiceTest {
         throw new UnsupportedOperationException("not used in this test");
       }
     };
-    GroupService localService = new GroupService(client, validator, fakeS3);
+    GroupService localService = new GroupService(databaseService, validator, fakeS3);
     try {
       expectThrows(ValidationException.class, () -> localService.delete(g));
     } finally {
-      client.deleteGroup("test.delete.hasartifacts");
+      databaseService.deleteGroup("test.delete.hasartifacts");
     }
   }
 
   @Test
   public void delete_emptyBucket_succeeds() {
     Group g = new Group("test.delete.empty", "", GroupState.VERIFIED, null, Instant.ofEpochMilli(1L), Instant.ofEpochMilli(1L));
-    client.insertGroup(g);
+    databaseService.insertGroup(g);
     S3Client fakeS3 = new S3Client() {
       public boolean isPrefixEmpty(String prefix) {
         return true; // empty
@@ -148,13 +141,46 @@ public class GroupServiceTest {
         throw new UnsupportedOperationException("not used in this test");
       }
     };
-    GroupService localService = new GroupService(client, validator, fakeS3);
+    GroupService localService = new GroupService(databaseService, validator, fakeS3);
     try {
       localService.delete(g);
-      assertFalse(client.findGroup("test.delete.empty").isPresent());
+      assertFalse(databaseService.findGroup("test.delete.empty").isPresent());
     } catch (RuntimeException e) {
-      client.deleteGroup("test.delete.empty");
+      databaseService.deleteGroup("test.delete.empty");
       throw e;
+    }
+  }
+
+  @Test
+  public void findOwningGroup_picksMostSpecificRegisteredAncestor() {
+    Group parent = new Group("com.owntest", "", GroupState.VERIFIED, null, Instant.ofEpochMilli(1714867200000L), Instant.ofEpochMilli(1714867200000L));
+    Group child = new Group("com.owntest.child", "", GroupState.VERIFIED, null, Instant.ofEpochMilli(1714867200000L), Instant.ofEpochMilli(1714867200000L));
+    databaseService.insertGroup(parent);
+    databaseService.insertGroup(child);
+    try {
+      // Exact match.
+      assertEquals(service.findOwningGroup("com.owntest").map(Group::name).orElse(null), "com.owntest");
+      // Nested namespace under the more-specific child resolves to the child, not the parent.
+      assertEquals(service.findOwningGroup("com.owntest.child.artifact").map(Group::name).orElse(null), "com.owntest.child");
+      // Namespace under the parent (no more-specific group) resolves to the parent.
+      assertEquals(service.findOwningGroup("com.owntest.other.thing").map(Group::name).orElse(null), "com.owntest");
+      // No registered owner (the bare TLD "com" is never a candidate).
+      assertTrue(service.findOwningGroup("net.unregistered.thing").isEmpty());
+    } finally {
+      databaseService.deleteGroup("com.owntest.child");
+      databaseService.deleteGroup("com.owntest");
+    }
+  }
+
+  @Test
+  public void findOwningGroup_shortNameExactMatch() {
+    Group shortGroup = new Group("mylibtest", "", GroupState.VERIFIED, null, Instant.ofEpochMilli(1714867200000L), Instant.ofEpochMilli(1714867200000L));
+    databaseService.insertGroup(shortGroup);
+    try {
+      assertEquals(service.findOwningGroup("mylibtest").map(Group::name).orElse(null), "mylibtest");
+      assertTrue(service.findOwningGroup("unregisteredshortname").isEmpty());
+    } finally {
+      databaseService.deleteGroup("mylibtest");
     }
   }
 
@@ -171,8 +197,8 @@ public class GroupServiceTest {
       List<Group> nullFilter = service.listForUser(creator, null);
       assertEquals(nullFilter.size(), 2);
     } finally {
-      client.deleteGroup("org.testfilter.blankone");
-      client.deleteGroup("org.testfilter.blanktwo");
+      databaseService.deleteGroup("org.testfilter.blankone");
+      databaseService.deleteGroup("org.testfilter.blanktwo");
     }
   }
 
@@ -186,7 +212,7 @@ public class GroupServiceTest {
       List<Group> groups = service.listForUser(creator, "CASEY");
       assertTrue(groups.stream().anyMatch(g -> g.name().equals("org.testfilter.casey")));
     } finally {
-      client.deleteGroup("org.testfilter.casey");
+      databaseService.deleteGroup("org.testfilter.casey");
     }
   }
 
@@ -207,8 +233,8 @@ public class GroupServiceTest {
       List<Group> underscore = service.listForUser(creator, "_");
       assertTrue(underscore.isEmpty(), "filter [_] must not act as a wildcard");
     } finally {
-      client.deleteGroup("org.testfilter.wildone");
-      client.deleteGroup("org.testfilter.wildtwo");
+      databaseService.deleteGroup("org.testfilter.wildone");
+      databaseService.deleteGroup("org.testfilter.wildtwo");
     }
   }
 
@@ -223,8 +249,8 @@ public class GroupServiceTest {
       assertEquals(groups.size(), 1);
       assertEquals(groups.getFirst().name(), "org.testfilter.alpha");
     } finally {
-      client.deleteGroup("org.testfilter.alpha");
-      client.deleteGroup("org.testfilter.beta");
+      databaseService.deleteGroup("org.testfilter.alpha");
+      databaseService.deleteGroup("org.testfilter.beta");
     }
   }
 
@@ -237,7 +263,7 @@ public class GroupServiceTest {
       List<Group> groups = service.listForUser(creator, "zzz-does-not-exist");
       assertTrue(groups.isEmpty());
     } finally {
-      client.deleteGroup("org.testfilter.solo");
+      databaseService.deleteGroup("org.testfilter.solo");
     }
   }
 
@@ -249,7 +275,7 @@ public class GroupServiceTest {
       List<Group> groups = service.listForUser(creator);
       assertTrue(groups.stream().anyMatch(g -> g.name().equals("test-list-for-user-fixture")));
     } finally {
-      client.deleteGroup("test-list-for-user-fixture");
+      databaseService.deleteGroup("test-list-for-user-fixture");
     }
   }
 
@@ -259,9 +285,9 @@ public class GroupServiceTest {
     Group g = service.create(input("io.github.emptydesc", "had a description"), creator);
     try {
       service.updateDescription(g, "");
-      assertEquals(client.findGroup("io.github.emptydesc").orElseThrow().description(), "");
+      assertEquals(databaseService.findGroup("io.github.emptydesc").orElseThrow().description(), "");
     } finally {
-      client.deleteGroup("io.github.emptydesc");
+      databaseService.deleteGroup("io.github.emptydesc");
     }
   }
 
@@ -271,42 +297,9 @@ public class GroupServiceTest {
     Group g = service.create(input("io.github.updatedesc", "original"), creator);
     try {
       service.updateDescription(g, "  updated value  ");
-      assertEquals(client.findGroup("io.github.updatedesc").orElseThrow().description(), "updated value");
+      assertEquals(databaseService.findGroup("io.github.updatedesc").orElseThrow().description(), "updated value");
     } finally {
-      client.deleteGroup("io.github.updatedesc");
-    }
-  }
-
-  @Test
-  public void findOwningGroup_shortNameExactMatch() {
-    Group shortGroup = new Group("mylibtest", "", GroupState.VERIFIED, null, Instant.ofEpochMilli(1714867200000L), Instant.ofEpochMilli(1714867200000L));
-    client.insertGroup(shortGroup);
-    try {
-      assertEquals(service.findOwningGroup("mylibtest").map(Group::name).orElse(null), "mylibtest");
-      assertTrue(service.findOwningGroup("unregisteredshortname").isEmpty());
-    } finally {
-      client.deleteGroup("mylibtest");
-    }
-  }
-
-  @Test
-  public void findOwningGroup_picksMostSpecificRegisteredAncestor() {
-    Group parent = new Group("com.owntest", "", GroupState.VERIFIED, null, Instant.ofEpochMilli(1714867200000L), Instant.ofEpochMilli(1714867200000L));
-    Group child = new Group("com.owntest.child", "", GroupState.VERIFIED, null, Instant.ofEpochMilli(1714867200000L), Instant.ofEpochMilli(1714867200000L));
-    client.insertGroup(parent);
-    client.insertGroup(child);
-    try {
-      // Exact match.
-      assertEquals(service.findOwningGroup("com.owntest").map(Group::name).orElse(null), "com.owntest");
-      // Nested namespace under the more-specific child resolves to the child, not the parent.
-      assertEquals(service.findOwningGroup("com.owntest.child.artifact").map(Group::name).orElse(null), "com.owntest.child");
-      // Namespace under the parent (no more-specific group) resolves to the parent.
-      assertEquals(service.findOwningGroup("com.owntest.other.thing").map(Group::name).orElse(null), "com.owntest");
-      // No registered owner (the bare TLD "com" is never a candidate).
-      assertTrue(service.findOwningGroup("net.unregistered.thing").isEmpty());
-    } finally {
-      client.deleteGroup("com.owntest.child");
-      client.deleteGroup("com.owntest");
+      databaseService.deleteGroup("io.github.updatedesc");
     }
   }
 
@@ -320,9 +313,9 @@ public class GroupServiceTest {
           () -> service.updateDescription(g, "x".repeat(501))
       );
       assertNotNull(ex.errors().getFieldError("description", "[tooLong]description"));
-      assertEquals(client.findGroup("io.github.toolong").orElseThrow().description(), "original");
+      assertEquals(databaseService.findGroup("io.github.toolong").orElseThrow().description(), "original");
     } finally {
-      client.deleteGroup("io.github.toolong");
+      databaseService.deleteGroup("io.github.toolong");
     }
   }
 }

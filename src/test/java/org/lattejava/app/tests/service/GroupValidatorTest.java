@@ -7,14 +7,15 @@ package org.lattejava.app.tests.service;
 import module java.base;
 import module org.lattejava.app;
 
+import org.lattejava.app.tests.*;
 import org.lattejava.web.*;
 import org.testng.annotations.*;
 
 import static org.testng.Assert.*;
 
 @Test
-public class GroupValidatorTest {
-  public DatabaseService client;
+public class GroupValidatorTest extends BaseTest {
+  public DatabaseService databaseService;
   public GroupValidator validator;
 
   private static Group group(String name) {
@@ -23,14 +24,9 @@ public class GroupValidatorTest {
 
   @BeforeClass
   public void beforeClass() {
-    Configuration config = new Configuration(
-        List.of("db.password", "db.url", "db.username"),
-        Path.of(System.getProperty("user.home"), ".config", "latte", "app", "config.properties"),
-        Path.of("src/test/resources/config.properties")
-    );
-    client = new DatabaseService(config);
+    databaseService = new DatabaseService(main.config);
     TLDList tlds = new TLDList(Set.of("org", "com", "io", "dev", "net"));
-    validator = new GroupValidator(client, tlds);
+    validator = new GroupValidator(databaseService, tlds);
   }
 
   @Test
@@ -71,13 +67,13 @@ public class GroupValidatorTest {
   @Test
   public void rejectsAncestorPrefix() {
     Group parent = new Group("test.parentcheck", "", GroupState.VERIFIED, null, Instant.ofEpochMilli(1714867200000L), Instant.ofEpochMilli(1714867200000L));
-    client.insertGroup(parent);
+    databaseService.insertGroup(parent);
     try {
       Errors errors = validator.validate(group("test.parentcheck.child"));
       assertFalse(errors.empty());
       assertNotNull(errors.getFieldError("name", "[ancestorConflict]name"));
     } finally {
-      client.deleteGroup("test.parentcheck");
+      databaseService.deleteGroup("test.parentcheck");
     }
   }
 
@@ -91,13 +87,13 @@ public class GroupValidatorTest {
   @Test
   public void rejectsExistingName() {
     Group existing = new Group("test.exists.fixture", "", GroupState.VERIFIED, null, Instant.ofEpochMilli(1714867200000L), Instant.ofEpochMilli(1714867200000L));
-    client.insertGroup(existing);
+    databaseService.insertGroup(existing);
     try {
       Errors errors = validator.validate(group("test.exists.fixture"));
       assertFalse(errors.empty());
       assertNotNull(errors.getFieldError("name", "[duplicate]name"));
     } finally {
-      client.deleteGroup("test.exists.fixture");
+      databaseService.deleteGroup("test.exists.fixture");
     }
   }
 
