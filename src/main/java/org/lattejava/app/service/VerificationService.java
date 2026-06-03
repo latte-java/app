@@ -17,7 +17,7 @@ import org.lattejava.web.Configuration;
 public class VerificationService {
   public static final Duration DEADLINE = Duration.ofHours(48);
   private static final String GITHUB_AUTHORIZE_URL = "https://github.com/login/oauth/authorize";
-  private static final UUID GITHUB_IDP_ID = UUID.fromString("bef65e1f-0ecf-4c7a-93cb-f58c3ce10b72");
+  private static final UUID GITHUB_IDP_ID = UUID.fromString("18cc6f6e-5208-48b1-a2b3-dd55c30733de");
   private static final String GITHUB_SCOPE = "read:user user:email read:org";
   private static final System.Logger LOG = System.getLogger(VerificationService.class.getName());
   private static final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor(r -> {
@@ -164,7 +164,7 @@ public class VerificationService {
     ClientResponse<IdentityProviderLinkResponse, ?> response = fusionAuth.createUserLink(request);
     if (!response.wasSuccessful()) {
       LOG.log(System.Logger.Level.ERROR,
-          "Failed to link GitHub account [" + githubUser.login() + "] to user [" + userId + "]. FA error [" + response.errorResponse + "]");
+          "Failed to link GitHub account [" + githubUser.login() + "] to user [" + userId + "]. FA status code [" + response.status + "]. FA error [" + response.errorResponse + "]");
       return GitHubLinkResult.LINK_FAILED;
     }
 
