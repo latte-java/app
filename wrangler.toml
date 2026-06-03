@@ -44,10 +44,8 @@ FUSIONAUTH_ISSUER = "https://auth.lattejava.org"
 S3_REGION = "auto"
 S3_ENDPOINT = "https://fc7ca59f9d7571dfd8bce1c3edfd4f0a.r2.cloudflarestorage.com"
 S3_BUCKET = "latte-repository"
-DB_URL = "jdbc:postgresql://<planetscale-host>:6432/<database>?sslmode=require&prepareThreshold=0"
-DB_USERNAME = "<planetscale-user>"
+DB_URL = "jdbc:postgresql://us-east-4.pg.psdb.cloud:6432/postgres?sslmode=require&prepareThreshold=0"
+DB_USERNAME = "pscale_api_ocmtmgeqkgek.fwug00playvr"
 FUSIONAUTH_CLIENTID = "e9fdb985-9173-4e01-9d73-ac2d60d1dc8e"
 FUSIONAUTH_CLICLIENTID = "cc5f3c9e-b28e-4632-bafe-823363669820"
 GITHUB_CLIENTID = "Ov23lizxeTxZaPWqEIXY"
-# Pending:
-# S3_ACCESSKEYID = ""  # R2 S3 API token, paired with the S3_SECRETACCESSKEY secret
