@@ -2,6 +2,11 @@ name = "latte-app"
 main = "src/main/worker/index.js"
 compatibility_date = "2026-05-01"
 
+# Enable Workers Observability so Worker + Durable Object + container logs are retained and viewable
+# in the dashboard (Workers & Pages -> latte-app -> Logs) and via `npx wrangler tail latte-app`.
+[observability]
+enabled = true
+
 # Publicly serve the app at app.lattejava.org. Requires the lattejava.org zone to be active in
 # this Cloudflare account (it is); wrangler provisions the edge cert + DNS record on deploy.
 [[routes]]
