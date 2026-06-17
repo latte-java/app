@@ -11,7 +11,7 @@
 @param Errors errors = new Errors()
 
 !{List<Error> emailErrors = errors.fieldErrors.getOrDefault("email", java.util.List.of());}
-!{String emailError = emailErrors.isEmpty() ? null : emailErrors.get(0).message;}
+!{String emailError = emailErrors.isEmpty() ? null : emailErrors.get(0).message();}
 
 @template.layout.main(view=view, pageTitle="Invite a member", activeNav="groups", activeGroupId=group.name(),
 content=@`
@@ -26,7 +26,7 @@ content=@`
   @if(!errors.generalErrors.isEmpty())
     <div class="mb-4 p-4 border border-red-300 bg-red-50 dark:bg-red-950/40 rounded-lg text-sm text-red-700 dark:text-red-300">
       @for(Error err : errors.generalErrors)
-        <p class="m-0">${err.message}</p>
+        <p class="m-0">${err.message()}</p>
       @endfor
     </div>
   @endif

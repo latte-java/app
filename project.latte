@@ -2,7 +2,7 @@
  * Copyright (c) 2026 The Latte Project
  * SPDX-License-Identifier: MIT
  */
-project(group: "org.lattejava", name: "app", version: "0.1.0", licenses: ["MIT"]) {
+project(group: "org.lattejava", name: "app", version: "0.2.0", licenses: ["MIT"]) {
   workflow {
     standard()
 
@@ -19,19 +19,16 @@ project(group: "org.lattejava", name: "app", version: "0.1.0", licenses: ["MIT"]
   }
 
   dependencies {
+    group(name: "compile-processors") {
+      dependency(id: "org.lattejava:json:0.4.0")
+    }
     group(name: "compile") {
-      dependency(id: "com.fasterxml.jackson.core:jackson-annotations:2.21")
-      dependency(id: "com.fasterxml.jackson.core:jackson-core:2.21.1")
-      dependency(id: "com.fasterxml.jackson.core:jackson-databind:2.21.1")
       dependency(id: "gg.jte:jte:3.2.1")
       dependency(id: "gg.jte:jte-runtime:3.2.1")
-      dependency(id: "io.fusionauth:fusionauth-java-client:1.65.0") {
-        exclusion(id: "io.fusionauth:fusionauth-jwt")
-      }
-      dependency(id: "com.inversoft:restify:4.4.0")
+      dependency(id: "org.lattejava:fusionauth:0.4.0")
       dependency(id: "org.lattejava:http:0.1.5")
       dependency(id: "org.lattejava:jwt:0.1.0")
-      dependency(id: "org.lattejava:web:0.3.0")
+      dependency(id: "org.lattejava:web:0.4.0")
       dependency(id: "org.jooq:jooq:3.21.4")
       // jOOQ's module-info `requires static` these, so javac needs them on the compile module-path (verified:
       // moving them to a runtime group fails compilation). They are not transitively resolved (optional in
@@ -69,9 +66,9 @@ project(group: "org.lattejava", name: "app", version: "0.1.0", licenses: ["MIT"]
 // Plugins
 database = loadPlugin(id: "org.lattejava.plugin:database:0.4.0")
 dependency = loadPlugin(id: "org.lattejava.plugin:dependency:0.4.0")
-file = loadPlugin(id: "org.lattejava.plugin:file:0.4.0")
-idea = loadPlugin(id: "org.lattejava.plugin:idea:0.4.0")
-java = loadPlugin(id: "org.lattejava.plugin:java:0.4.0")
+file = loadPlugin(id: "org.lattejava.plugin:file:0.4.3")
+idea = loadPlugin(id: "org.lattejava.plugin:idea:0.4.1")
+java = loadPlugin(id: "org.lattejava.plugin:java:0.4.4")
 javaTestNG = loadPlugin(id: "org.lattejava.plugin:java-testng:0.4.0")
 release = loadPlugin(id: "org.lattejava.plugin:release-git:0.4.0")
 
@@ -85,15 +82,17 @@ target(name: "clean", description: "Cleans the project") {
 }
 
 target(name: "build", description: "Compiles the project, JARs it, and compiles the Tailwind CSS") {
+  file.execute(cmd: "git config core.hooksPath .githooks")
+
   java.compile()
   java.jar()
 
   // Compile Tailwind CSS one-shot into web/static/css/app.css (the `tailwind` target below is the
   // watch variant used during development). Ensures the CLI is installed first, like that target.
   if (!new File("node_modules/@tailwindcss/cli").exists()) {
-    exec(["npm", "install", "tailwindcss", "@tailwindcss/cli"])
+    file.execute(cmd: "npm install tailwindcss @tailwindcss/cli")
   }
-  exec(["npx", "@tailwindcss/cli", "-i", "src/main/css/app.css", "-o", "web/static/css/app.css"])
+  file.execute(cmd: "npx @tailwindcss/cli -i src/main/css/app.css -o web/static/css/app.css")
 }
 
 target(name: "test", description: "Runs the project's tests", dependsOn: ["build", "test-database"]) {
@@ -162,36 +161,28 @@ target(name: "bundle", description: "Builds a runnable bundle into `build/bundle
 }
 
 target(name: "deploy", description: "Builds the bundle and deploys the app to Cloudflare (Worker + container)", dependsOn: ["bundle"]) {
-  exec(["npx", "wrangler", "deploy"])
+  file.execute(cmd: "npx wrangler deploy")
 }
 
 target(name: "tailwind", description: "Installs Tailwind CSS via npm (if needed) and runs it in watch mode against web/**/*.jte") {
   if (!new File("node_modules/@tailwindcss/cli").exists()) {
-    exec(["npm", "install", "tailwindcss", "@tailwindcss/cli"])
+    file.execute(cmd: "npm install tailwindcss @tailwindcss/cli")
   }
-  exec(["npx", "@tailwindcss/cli", "-i", "src/main/css/app.css", "-o", "web/static/css/app.css", "--watch"])
+  file.execute(cmd: "npx @tailwindcss/cli -i src/main/css/app.css -o web/static/css/app.css --watch")
 }
 
 target(name: "minio", description: "Starts a local MinIO container for S3 testing") {
   output.infoln("Stopping MinIO Docker container (if exists)")
-  exec("docker rm -f latte-minio", true)
+  file.execute(cmd: "docker rm -f latte-minio", ignoreFailures: true)
 
   output.infoln("Starting MinIO Docker container in the background")
-  exec("docker run -d --name latte-minio -p 9000:9000 -p 9001:9001 -e MINIO_ROOT_USER=latte-test -e MINIO_ROOT_PASSWORD=latte-test-secret minio/minio server /data --console-address :9001")
+  file.execute(cmd: "docker run -d --name latte-minio -p 9000:9000 -p 9001:9001 -e MINIO_ROOT_USER=latte-test -e MINIO_ROOT_PASSWORD=latte-test-secret minio/minio server /data --console-address :9001")
   Thread.sleep(1000)
 
   output.infoln("Initializing MinIO")
-  exec("docker exec latte-minio mc alias set local http://localhost:9000 latte-test latte-test-secret")
-  exec("docker exec latte-minio mc mb local/latte-test")
+  file.execute(cmd: "docker exec latte-minio mc alias set local http://localhost:9000 latte-test latte-test-secret")
+  file.execute(cmd: "docker exec latte-minio mc mb local/latte-test")
 
   // Allow anonymous downloads so tests can fetch uploaded objects directly over HTTP to verify them.
-  exec("docker exec latte-minio mc anonymous set download local/latte-test")
-}
-
-private void exec(cmd, boolean ignoreFailure = false) {
-  def proc = cmd.execute()
-  proc.waitForProcessOutput(System.out, System.err)
-  if (!ignoreFailure && proc.exitValue() != 0) {
-    fail("Command failed [exit=${proc.exitValue()}]: ${cmd}")
-  }
+  file.execute(cmd: "docker exec latte-minio mc anonymous set download local/latte-test")
 }

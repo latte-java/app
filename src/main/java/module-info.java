@@ -3,19 +3,19 @@
  * SPDX-License-Identifier: MIT
  */
 module org.lattejava.app {
-  requires com.fasterxml.jackson.databind;
   requires com.zaxxer.hikari;
-  requires fusionauth.java.client;
   requires gg.jte;
   requires gg.jte.runtime;
   requires java.naming;
   requires java.net.http;
   requires org.jooq;
+  requires org.lattejava.fusionauth;
   requires org.lattejava.http;
   requires org.lattejava.jwt;
   requires org.lattejava.web;
   requires org.postgresql.jdbc;
-  requires restify;
+
+  requires static org.lattejava.json;
 
   exports org.lattejava.app;
   exports org.lattejava.app.db;

@@ -4,9 +4,7 @@
  */
 package org.lattejava.app.tests;
 
-import module fusionauth.java.client;
 import module java.base;
-import module org.lattejava.app;
 import module org.lattejava.web;
 import module org.testng;
 

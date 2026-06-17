@@ -4,15 +4,14 @@
  */
 package org.lattejava.app.service;
 
-import module fusionauth.java.client;
 import module java.base;
 import module org.lattejava.app;
-import module org.lattejava.web;
+import module org.lattejava.fusionauth;
 
-import com.inversoft.rest.*;
+import org.lattejava.app.error.Errors;
 import org.lattejava.app.model.Member;
 import org.lattejava.app.model.User;
-import org.lattejava.web.Configuration;
+import org.lattejava.web.*;
 
 public class MembershipService {
   private static final UUID APPLICATION_ID = UUID.fromString("e9fdb985-9173-4e01-9d73-ac2d60d1dc8e");
@@ -27,8 +26,8 @@ public class MembershipService {
   }
 
   /**
-   * Test-only constructor. Production code should use the {@link #MembershipService(Configuration)}
-   * constructor instead.
+   * Test-only constructor. Production code should use the {@link #MembershipService(Configuration)} constructor
+   * instead.
    */
   public MembershipService(DatabaseService databaseService, Configuration config) {
     this.databaseService = databaseService;
@@ -82,14 +81,14 @@ public class MembershipService {
     }
 
     Member m = memberOpt.get();
-    ClientResponse<UserResponse, ?> response = fusionAuth.retrieveUser(userId);
+
+    UserResponse response = fusionAuth.retrieveUserWithId(userId, null);
     User user;
-    if (response.wasSuccessful() && response.successResponse != null && response.successResponse.user != null) {
-      user = UserService.toUser(response.successResponse.user);
-    } else {
-      LOG.log(System.Logger.Level.WARNING,
-          "FusionAuth has no user for member [" + m.userId() + "] in group [" + m.groupName() + "]");
+    if (response == null) {
+      LOG.log(System.Logger.Level.WARNING, "FusionAuth has no user for member [" + m.userId() + "] in group [" + m.groupName() + "]");
       user = m.user();
+    } else {
+      user = UserService.toUser(response.user());
     }
     return Optional.of(new Member(m.groupName(), user, m.role(), m.state(), m.invitedBy(), m.invitedAt(), m.joinedAt()));
   }
@@ -105,12 +104,30 @@ public class MembershipService {
     }
 
     String email = request.email();
+    UserResponse lookup = fusionAuth.retrieveUser(null, null, null, null, email, null, null);
     UUID userId;
-    User invitedUser;
-    ClientResponse<UserResponse, ?> lookup = fusionAuth.retrieveUserByEmail(email);
-    if (lookup.wasSuccessful() && lookup.successResponse != null && lookup.successResponse.user != null) {
-      userId = lookup.successResponse.user.id;
-      invitedUser = UserService.toUser(lookup.successResponse.user);
+    User invitee;
+    if (lookup == null) {
+      userId = UUID.randomUUID();
+      invitee = new User(userId, email, null);
+      var newUser = org.lattejava.fusionauth.domain.User.builder()
+                                                        .id(userId)
+                                                        .email(email)
+                                                        .build();
+      var registration = UserRegistration.builder()
+                                         .applicationId(APPLICATION_ID)
+                                         .id(userId)
+                                         .build();
+      var registrationRequest = RegistrationRequest.builder()
+                                                   .user(newUser)
+                                                   .registration(registration)
+                                                   .sendSetPasswordIdentityType(SendSetPasswordIdentityType.email)
+                                                   .build();
+
+      fusionAuth.registerWithId(userId, registrationRequest);
+    } else {
+      userId = lookup.user().id();
+      invitee = UserService.toUser(lookup.user());
 
       // This is only possible for existing users
       Errors dupErrors = validator.validateNoDuplicateMembership(request.groupName(), userId, email);
@@ -118,31 +135,18 @@ public class MembershipService {
         throw new ValidationException(dupErrors);
       }
 
-      var sendRequest = new SendRequest(List.of(userId), Map.of("groupName", request.groupName()));
-      ClientResponse<SendResponse, ?> sendResponse = fusionAuth.sendEmail(INVITE_TEMPLATE_ID, sendRequest);
-      if (!sendResponse.wasSuccessful()) {
-        LOG.log(System.Logger.Level.WARNING,
-            "Failed to send invite email to [" + email + "] for group [" + request.groupName() + "]. FA error [" + sendResponse.errorResponse + "]");
-      }
-    } else {
-      userId = UUID.randomUUID();
-      invitedUser = new User(userId, email, null);
-      var newUser = new io.fusionauth.domain.User().with(u -> u.id = userId)
-                                                   .with(u -> u.email = email);
-      var registration = new UserRegistration().with(ur -> ur.applicationId = APPLICATION_ID);
-      var registrationRequest = new RegistrationRequest(newUser, registration);
-      registrationRequest.sendSetPasswordIdentityType = SendSetPasswordIdentityType.email;
-
-      ClientResponse<RegistrationResponse, ?> createResponse = fusionAuth.register(userId, registrationRequest);
-      if (!createResponse.wasSuccessful()) {
-        throw new IllegalStateException("Failed to create FusionAuth user for [" + email + "]. FA error [" + createResponse.errorResponse.toString() + "]");
-      }
+      // The user exists, email them
+      var sendRequest = SendRequest.builder()
+                                   .userIds(List.of(userId))
+                                   .requestData(Map.of("groupName", request.groupName()))
+                                   .build();
+      fusionAuth.sendEmailWithId(INVITE_TEMPLATE_ID, sendRequest);
     }
 
     Instant now = Instant.now();
     Member member = new Member(
         request.groupName(),
-        invitedUser,
+        invitee,
         request.role(),
         MembershipState.PENDING,
         inviter.userId(),
@@ -168,18 +172,20 @@ public class MembershipService {
       return members;
     }
 
-    List<UUID> ids = members.stream().map(Member::userId).toList();
-    ClientResponse<SearchResponse, ?> response = fusionAuth.searchUsersByIds(ids);
-    Map<UUID, io.fusionauth.domain.User> byId = new HashMap<>();
-    if (response.wasSuccessful() && response.successResponse != null && response.successResponse.users != null) {
-      for (io.fusionauth.domain.User faUser : response.successResponse.users) {
-        byId.put(faUser.id, faUser);
+    var ids = members.stream()
+                     .map(Member::userId)
+                     .toList();
+    SearchResponse response = fusionAuth.searchUsersByIdsWithId(ids, null, null, null, null, null);
+    Map<UUID, org.lattejava.fusionauth.domain.User> byId = new HashMap<>();
+    if (response != null) {
+      for (org.lattejava.fusionauth.domain.User u : response.users()) {
+        byId.put(u.id(), u);
       }
     }
 
     List<Member> enriched = new ArrayList<>(members.size());
     for (Member m : members) {
-      io.fusionauth.domain.User faUser = byId.get(m.userId());
+      org.lattejava.fusionauth.domain.User faUser = byId.get(m.userId());
       User user;
       if (faUser == null) {
         LOG.log(System.Logger.Level.WARNING,

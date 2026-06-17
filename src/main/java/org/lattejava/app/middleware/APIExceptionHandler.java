@@ -4,11 +4,12 @@
  */
 package org.lattejava.app.middleware;
 
-import module com.fasterxml.jackson.databind;
 import module java.base;
 import module org.lattejava.app;
 import module org.lattejava.http;
 import module org.lattejava.web;
+
+import org.lattejava.app.error.Error;
 
 /**
  * Renders JSON error responses for the API routes. Installed at the {@code /api} prefix, inside the browser-facing
@@ -24,8 +25,6 @@ import module org.lattejava.web;
  * @author Brian Pontarelli
  */
 public class APIExceptionHandler extends ExceptionHandler {
-  private static final ObjectMapper MAPPER = new ObjectMapper();
-
   public APIExceptionHandler() {
     super(Map.of(
         S3Exception.class, internalErrorRenderer(),
@@ -34,20 +33,20 @@ public class APIExceptionHandler extends ExceptionHandler {
   }
 
   private static ErrorRenderer internalErrorRenderer() {
-    return (_, res, _) -> writeJSON(res, 500, "InternalError", "The presigned URL could not be generated.");
+    return (_, res, _) -> writeJSON(res, 500, new Error("InternalError", "The presigned URL could not be generated."));
   }
 
   private static ErrorRenderer validationRenderer() {
     return (_, res, e) -> {
       res.setStatus(400);
       res.setContentType("application/json");
-      MAPPER.writeValue(res.getOutputStream(), ((ValidationException) e).errors());
+      res.getWriter().write(((ValidationException) e).errors().toJSON());
     };
   }
 
-  private static void writeJSON(HTTPResponse res, int status, String error, String message) throws IOException {
+  private static void writeJSON(HTTPResponse res, int status, Error error) throws IOException {
     res.setStatus(status);
     res.setContentType("application/json");
-    MAPPER.writeValue(res.getOutputStream(), Map.of("error", error, "message", message));
+    res.getWriter().write(error.toJSON());
   }
 }

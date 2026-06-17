@@ -7,7 +7,7 @@
 
 !{Group group = groupView.group();}
 !{java.util.List<org.lattejava.app.error.Error> descErrors = errors.fieldErrors.getOrDefault("description", java.util.List.of());}
-!{String descError = descErrors.isEmpty() ? null : descErrors.get(0).message;}
+!{String descError = descErrors.isEmpty() ? null : descErrors.get(0).message();}
 
 <div class="max-w-3xl grid gap-4">
   @if(groupView.canManage())

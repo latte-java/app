@@ -3,15 +3,14 @@
  * SPDX-License-Identifier: MIT
  */
 module org.lattejava.app.tests {
-  requires fusionauth.java.client;
   requires java.net.http;
   requires java.sql;
   requires org.lattejava.app;
+  requires org.lattejava.fusionauth;
   requires org.lattejava.http;
   requires org.lattejava.web;
   requires org.postgresql.jdbc;
   requires org.testng;
-  requires restify;
 
   opens org.lattejava.app.tests to org.testng;
   opens org.lattejava.app.tests.db to org.testng;

@@ -161,7 +161,7 @@ public class Main {
               PublishAuthorizer publishAuthorizer = new PublishAuthorizer();
               pub.install(apiOIDC.authenticated())
                  .get("/{groupName}", publish::precheck, apiOIDC.authorized(publishAuthorizer)) // GET and HEAD
-                 .post("/{groupName}", publish::publish, JSONBodySupplier.of(PublishRequest.class), apiOIDC.authorized(publishAuthorizer));
+                 .post("/{groupName}", publish::publish, BodySupplier.of(PublishRequest::fromJSON), apiOIDC.authorized(publishAuthorizer));
             });
        })
        .missingHandler(this::missing)

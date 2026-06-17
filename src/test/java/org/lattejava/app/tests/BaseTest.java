@@ -4,13 +4,12 @@
  */
 package org.lattejava.app.tests;
 
-import module fusionauth.java.client;
 import module java.base;
 import module org.lattejava.app;
+import module org.lattejava.fusionauth;
 import module org.lattejava.web;
 import module org.testng;
 
-import com.inversoft.rest.*;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
@@ -46,11 +45,11 @@ public abstract class BaseTest {
         main.config.get("fusionauth.apiKey"),
         main.config.get("fusionauth.baseUrl")
     );
-    ClientResponse<UserResponse, ?> userResponse = fa.retrieveUserByEmail("test@lattejava.org");
-    if (!userResponse.wasSuccessful() || userResponse.successResponse.user == null) {
+    var userResponse = fa.retrieveUser(null, null, null, null, "test@lattejava.org", null, null);
+    if (userResponse == null || userResponse.user() == null) {
       throw new IllegalStateException("FA test user not found - is FusionAuth running with kickstart applied?");
     }
-    testUserId = userResponse.successResponse.user.id;
+    testUserId = userResponse.user().id();
   }
 
   /**

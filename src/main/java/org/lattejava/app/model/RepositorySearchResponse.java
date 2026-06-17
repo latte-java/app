@@ -5,6 +5,9 @@
 package org.lattejava.app.model;
 
 import module java.base;
+import module org.lattejava.json;
+
+import org.lattejava.app.model.internal.*;
 
 /**
  * The JSON response for {@code GET /api/v1/repository/search}: the queried artifact id and its versions, sorted newest
@@ -12,5 +15,9 @@ import module java.base;
  *
  * @author Brian Pontarelli
  */
+@JSON
 public record RepositorySearchResponse(String id, List<String> versions) {
+  public String toJSON() {
+    return RepositorySearchResponseJSON.toJSON(this);
+  }
 }

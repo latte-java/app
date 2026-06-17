@@ -23,7 +23,7 @@ services:
 
   # This is the main FusionAuth application.
   fusionauth:
-    image: fusionauth/fusionauth-app:latest
+    image: fusionauth/fusionauth-app:1.66.0
     depends_on:
       db:
         condition: service_healthy

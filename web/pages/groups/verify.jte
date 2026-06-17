@@ -16,7 +16,7 @@
     <a class="hover:text-slate-900 dark:hover:text-slate-100 no-underline" href="/app/groups/">Groups</a>
     @template.components.icon(name = "chevron-right", size = 11)
     <a class="hover:text-slate-900 dark:hover:text-slate-100 no-underline"
-       href="/app/groups/${group.name()}">@template.components.italic-name(text = group.name(), size = "text-sm")</a>
+       href="/app/groups/${group.name()}/">@template.components.italic-name(text = group.name(), size = "text-sm")</a>
     @template.components.icon(name = "chevron-right", size = 11)
     <span>Verify</span>
   </nav>

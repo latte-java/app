@@ -4,7 +4,6 @@
  */
 package org.lattejava.app.controller;
 
-import module com.fasterxml.jackson.databind;
 import module java.base;
 import module org.lattejava.app;
 import module org.lattejava.http;
@@ -24,7 +23,6 @@ import org.lattejava.app.service.Services;
  * @author Brian Pontarelli
  */
 public class RepositorySearchController {
-  private static final ObjectMapper MAPPER = new ObjectMapper();
   private final RepositorySearchService repositorySearchService;
 
   public RepositorySearchController() {
@@ -43,6 +41,6 @@ public class RepositorySearchController {
 
     res.setStatus(200);
     res.setContentType("application/json");
-    MAPPER.writeValue(res.getOutputStream(), result.get());
+    res.getWriter().write(result.get().toJSON());
   }
 }

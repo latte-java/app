@@ -4,7 +4,6 @@
  */
 package org.lattejava.app.controller;
 
-import module com.fasterxml.jackson.databind;
 import module java.base;
 import module org.lattejava.app;
 import module org.lattejava.http;
@@ -16,8 +15,9 @@ import org.lattejava.app.service.Services;
 
 /**
  * Handles the publish endpoints. {@code POST /api/v1/publish/{groupName}} asks {@link PublishService} for a presigned
- * PUT URL and returns it as JSON; the request body is parsed into a {@link PublishRequest} by a {@code JSONBodySupplier}
- * on the route, so that method is a {@link org.lattejava.web.BodyHandler}. {@code GET /api/v1/publish/{groupName}} is a
+ * PUT URL and returns it as JSON; the request body is parsed into a {@link PublishRequest} by a
+ * {@code BodySupplier.of(PublishRequest::fromJSON)} on the route, so that method is a
+ * {@link org.lattejava.web.BodyHandler}. {@code GET /api/v1/publish/{groupName}} is a
  * bodyless permission pre-check (see {@link #precheck}); the HTTP server's automatic HEAD-to-GET rewrite means the CLI
  * can issue it as a {@code HEAD}. Authentication and group authorization run upstream as middleware for both (see
  * {@link org.lattejava.app.security.PublishAuthorizer}). Error responses are rendered by the
@@ -30,7 +30,6 @@ import org.lattejava.app.service.Services;
  */
 public class PublishController {
   private static final String GROUP_NAME = "groupName";
-  private static final ObjectMapper MAPPER = new ObjectMapper();
   private final PublishService publishService;
 
   public PublishController() {
@@ -60,6 +59,6 @@ public class PublishController {
     String url = publishService.createPresignedURL(groupName, fileName);
     res.setStatus(200);
     res.setContentType("application/json");
-    MAPPER.writeValue(res.getOutputStream(), new PublishResponse(url));
+    res.getWriter().write(new PublishResponse(url).toJSON());
   }
 }

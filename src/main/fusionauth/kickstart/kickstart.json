@@ -37,7 +37,6 @@
     {
       "method": "POST",
       "url": "/api/key/generate/#{asymmetricKeyId}",
-      "tenantId": "#{defaultTenantId}",
       "body": {
         "key": {
           "algorithm": "RS256",
@@ -112,8 +111,7 @@
             "logoImageURL": "http://localhost:8080/static/images/logo.svg",
             "logoImageSize": "10rem",
             "favicons": [
-              { "href": "http://localhost:8080/static/favicon-32x32.png", "rel": "icon", "type": "image/png" },
-              { "href": "http://localhost:8080/static/favicon-16x16.png", "rel": "icon", "type": "image/png" }
+              { "href": "http://localhost:8080/static/favicon-32x32.png", "rel": "icon", "type": "image/x-icon" }
             ]
           }
         }

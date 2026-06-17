@@ -4,15 +4,14 @@
  */
 package org.lattejava.app.service;
 
-import module fusionauth.java.client;
 import module java.base;
 import module org.lattejava.app;
-import module org.lattejava.web;
+import module org.lattejava.fusionauth;
 
-import com.inversoft.rest.*;
+import org.lattejava.app.error.Errors;
 import org.lattejava.app.model.Group;
 import org.lattejava.app.model.User;
-import org.lattejava.web.Configuration;
+import org.lattejava.web.*;
 
 public class VerificationService {
   public static final Duration DEADLINE = Duration.ofHours(48);
@@ -132,7 +131,7 @@ public class VerificationService {
 
   public boolean hasGitHubLink(UUID userId) {
     IdentityProviderLink link = retrieveGitHubLink(userId);
-    return link != null && link.token != null;
+    return link != null && link.token() != null;
   }
 
   public GitHubLinkResult linkGitHub(UUID userId, String code, String redirectURI) {
@@ -146,25 +145,23 @@ public class VerificationService {
       return GitHubLinkResult.OAUTH_FAILED;
     }
 
-    IdentityProviderLink existing = retrieveGitHubLink(userId);
+    var existing = retrieveGitHubLink(userId);
     if (existing != null) {
       unlinkGitHub(userId, existing);
     }
 
-    IdentityProviderLink link = new IdentityProviderLink();
-    link.identityProviderId = GITHUB_IDP_ID;
-    link.identityProviderUserId = Long.toString(githubUser.id());
-    link.userId = userId;
-    link.token = token;
-    link.displayName = githubUser.login();
+    var link = IdentityProviderLink.builder()
+                                   .identityProviderId(GITHUB_IDP_ID)
+                                   .identityProviderUserId(Long.toString(githubUser.id()))
+                                   .userId(userId)
+                                   .token(token)
+                                   .displayName(githubUser.login())
+                                   .build();
 
-    IdentityProviderLinkRequest request = new IdentityProviderLinkRequest();
-    request.identityProviderLink = link;
-
-    ClientResponse<IdentityProviderLinkResponse, ?> response = fusionAuth.createUserLink(request);
-    if (!response.wasSuccessful()) {
-      LOG.log(System.Logger.Level.ERROR,
-          "Failed to link GitHub account [" + githubUser.login() + "] to user [" + userId + "]. FA status code [" + response.status + "]. FA error [" + response.errorResponse + "]");
+    var request = new IdentityProviderLinkRequest(link, null, null);
+    var response = fusionAuth.createUserLinkWithId(request);
+    if (response == null) {
+      LOG.log(System.Logger.Level.ERROR, "Failed to link GitHub account [" + githubUser.login() + "] to user [" + userId + "]. FA returned a 404");
       return GitHubLinkResult.LINK_FAILED;
     }
 
@@ -204,20 +201,20 @@ public class VerificationService {
     }
 
     IdentityProviderLink link = retrieveGitHubLink(current.userId());
-    if (link == null || link.token == null) {
+    if (link == null || link.token() == null) {
       return GitHubVerifyResult.NOT_LINKED;
     }
 
     String[] segments = group.name().split("\\.");
     String accountOrOrg = segments[2];
 
-    String login = githubClient.getLogin(link.token);
+    String login = githubClient.getLogin(link.token());
     if (login == null) {
       unlinkGitHub(current.userId(), link);
       return GitHubVerifyResult.UNAUTHORIZED;
     }
 
-    AccountType accountType = githubClient.getAccountType(link.token, accountOrOrg);
+    AccountType accountType = githubClient.getAccountType(link.token(), accountOrOrg);
     if (accountType == AccountType.UNAUTHORIZED) {
       unlinkGitHub(current.userId(), link);
       return GitHubVerifyResult.UNAUTHORIZED;
@@ -232,7 +229,7 @@ public class VerificationService {
         return GitHubVerifyResult.NOT_AUTHORIZED;
       }
     } else {
-      MembershipStatus status = githubClient.checkOrgMembership(link.token, accountOrOrg, login);
+      MembershipStatus status = githubClient.checkOrgMembership(link.token(), accountOrOrg, login);
       if (status == MembershipStatus.UNAUTHORIZED) {
         unlinkGitHub(current.userId(), link);
         return GitHubVerifyResult.UNAUTHORIZED;
@@ -248,17 +245,15 @@ public class VerificationService {
   }
 
   private IdentityProviderLink retrieveGitHubLink(UUID userId) {
-    ClientResponse<IdentityProviderLinkResponse, ?> response = fusionAuth.retrieveUserLinksByUserId(GITHUB_IDP_ID, userId);
-    if (!response.wasSuccessful() ||
-        response.successResponse == null ||
-        response.successResponse.identityProviderLinks == null ||
-        response.successResponse.identityProviderLinks.isEmpty()) {
+    var response = fusionAuth.retrieveIdentityProviderLink(GITHUB_IDP_ID, userId, null);
+    if (response == null || response.identityProviderLinks() == null ||
+        response.identityProviderLinks().isEmpty()) {
       return null;
     }
-    return response.successResponse.identityProviderLinks.getFirst();
+    return response.identityProviderLinks().getFirst();
   }
 
   private void unlinkGitHub(UUID userId, IdentityProviderLink link) {
-    fusionAuth.deleteUserLink(GITHUB_IDP_ID, link.identityProviderUserId, userId);
+    fusionAuth.deleteUserLinkWithId(GITHUB_IDP_ID, link.identityProviderUserId(), userId);
   }
 }

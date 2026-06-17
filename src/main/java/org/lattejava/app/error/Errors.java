@@ -5,14 +5,32 @@
 package org.lattejava.app.error;
 
 import module java.base;
+import module org.lattejava.json;
+
+import org.lattejava.app.error.internal.ErrorsJSON;
 
 /**
- * Standard error collection. Holds field-keyed errors and general errors, suitable for surfacing
- * back to a form view or as an API response payload.
+ * Standard error collection. Holds field-keyed errors and general errors, suitable for surfacing back to a form view or
+ * as an API response payload.
  */
+@JSON
 public class Errors {
-  public final Map<String, List<Error>> fieldErrors = new LinkedHashMap<>();
-  public final List<Error> generalErrors = new LinkedList<>();
+  public final Map<String, List<Error>> fieldErrors;
+  public final List<Error> generalErrors;
+
+  public Errors() {
+    this(new LinkedList<>(), new HashMap<>());
+  }
+
+  @JSONConstructor
+  public Errors(List<Error> generalErrors,Map<String, List<Error>> fieldErrors) {
+    this.generalErrors = generalErrors;
+    this.fieldErrors = fieldErrors;
+  }
+
+  public static Errors fromJSON(String json) {
+    return ErrorsJSON.fromJSON(json);
+  }
 
   public Errors add(Errors otherErrors) {
     if (otherErrors != null) {
@@ -36,13 +54,13 @@ public class Errors {
 
   public boolean containsError(String codePrefix) {
     for (Error error : generalErrors) {
-      if (error.code.startsWith(codePrefix)) {
+      if (error.code().startsWith(codePrefix)) {
         return true;
       }
     }
     for (List<Error> errors : fieldErrors.values()) {
       for (Error error : errors) {
-        if (error.code.startsWith(codePrefix)) {
+        if (error.code().startsWith(codePrefix)) {
           return true;
         }
       }
@@ -68,7 +86,7 @@ public class Errors {
       return null;
     }
     for (Error fieldError : errors) {
-      if (fieldError.code.equals(code)) {
+      if (fieldError.code().equals(code)) {
         return fieldError;
       }
     }
@@ -84,6 +102,10 @@ public class Errors {
 
   public int size() {
     return generalErrors.size() + fieldErrors.values().stream().mapToInt(List::size).sum();
+  }
+
+  public String toJSON() {
+    return ErrorsJSON.toJSON(this);
   }
 
   @Override

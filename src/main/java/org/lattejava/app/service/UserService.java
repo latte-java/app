@@ -4,7 +4,6 @@
  */
 package org.lattejava.app.service;
 
-import module fusionauth.java.client;
 import module java.base;
 import module org.lattejava.app;
 import module org.lattejava.jwt;
@@ -38,7 +37,7 @@ public class UserService {
    * @param faUser The FusionAuth user.
    * @return The User.
    */
-  public static User toUser(io.fusionauth.domain.User faUser) {
-    return new User(faUser.id, faUser.email, faUser.username);
+  public static User toUser(org.lattejava.fusionauth.domain.User faUser) {
+    return new User(faUser.id(), faUser.email(), faUser.username());
   }
 }

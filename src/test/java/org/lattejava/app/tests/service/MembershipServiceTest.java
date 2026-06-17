@@ -4,16 +4,16 @@
  */
 package org.lattejava.app.tests.service;
 
-import module fusionauth.java.client;
 import module java.base;
 import module org.lattejava.app;
+import module org.lattejava.fusionauth;
+import module org.lattejava.web;
 import java.util.Optional;
 
 import org.lattejava.app.model.Group;
 import org.lattejava.app.model.Member;
 import org.lattejava.app.model.User;
 import org.lattejava.app.tests.*;
-import org.lattejava.web.*;
 import org.testng.annotations.*;
 
 import static org.testng.Assert.*;
@@ -206,7 +206,7 @@ public class MembershipServiceTest extends BaseTest {
   @Test
   public void listMembersEnrichesUserFromFusionAuth() {
     FusionAuthClient fa = new FusionAuthClient(main.config.get("fusionauth.apiKey"), main.config.get("fusionauth.baseUrl"));
-    UUID testUserId = fa.retrieveUserByEmail("test@lattejava.org").successResponse.user.id;
+    UUID testUserId = fa.retrieveUser(null, null, null, null, "test@lattejava.org", null, null).user().id();
 
     databaseService.deleteGroup("test.enrich.fixture"); // cascades to members
     databaseService.insertGroup(new Group("test.enrich.fixture", "Enrich fixture", GroupState.VERIFIED, null, Instant.ofEpochMilli(1L), Instant.ofEpochMilli(1L)));

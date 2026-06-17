@@ -21,74 +21,64 @@
       <sourceFolder url="file://$MODULE_DIR$/src/test/java" isTestSource="true" />
       <sourceFolder url="file://$MODULE_DIR$/src/main/css" type="java-resource" />
       <sourceFolder url="file://$MODULE_DIR$/src/main/fusionauth" type="java-resource" />
+      <sourceFolder url="file://$MODULE_DIR$/build/generated/main" isTestSource="false" generated="true" />
       <excludeFolder url="file://$MODULE_DIR$/build" />
       <excludeFolder url="file://$MODULE_DIR$/node_modules" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module-library">
+    <orderEntry type="module-library" scope="PROVIDED">
       <library>
         <CLASSES>
-          <root url="jar://$USER_HOME$/.m2/repository/io/fusionauth/fusionauth-java-client/1.65.0/fusionauth-java-client-1.65.0.jar!/" />
+          <root url="jar://$USER_HOME$/.cache/latte/org/lattejava/json/0.4.0/json-0.4.0.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$USER_HOME$/.m2/repository/io/fusionauth/fusionauth-java-client/1.65.0/fusionauth-java-client-1.65.0-sources.jar!/" />
+          <root url="jar://$USER_HOME$/.cache/latte/org/lattejava/json/0.4.0/json-0.4.0-src.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$USER_HOME$/.m2/repository/com/inversoft/restify/4.4.0/restify-4.4.0.jar!/" />
+          <root url="jar://$USER_HOME$/.cache/latte/org/lattejava/fusionauth/0.4.0/fusionauth-0.4.0.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$USER_HOME$/.m2/repository/com/inversoft/restify/4.4.0/restify-4.4.0-sources.jar!/" />
+          <root url="jar://$USER_HOME$/.cache/latte/org/lattejava/fusionauth/0.4.0/fusionauth-0.4.0-src.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$USER_HOME$/.cache/latte/org/lattejava/web/0.3.0/web-0.3.0.jar!/" />
+          <root url="jar://$USER_HOME$/.cache/latte/org/lattejava/web/0.4.0/web-0.4.0.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$USER_HOME$/.cache/latte/org/lattejava/web/0.3.0/web-0.3.0-src.jar!/" />
+          <root url="jar://$USER_HOME$/.cache/latte/org/lattejava/web/0.4.0/web-0.4.0-src.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$USER_HOME$/.m2/repository/com/fasterxml/jackson/core/jackson-databind/2.21.1/jackson-databind-2.21.1.jar!/" />
+          <root url="jar://$USER_HOME$/.cache/latte/org/lattejava/http/0.1.5/http-0.1.5.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$USER_HOME$/.m2/repository/com/fasterxml/jackson/core/jackson-databind/2.21.1/jackson-databind-2.21.1-sources.jar!/" />
+          <root url="jar://$USER_HOME$/.cache/latte/org/lattejava/http/0.1.5/http-0.1.5-src.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$USER_HOME$/.m2/repository/com/fasterxml/jackson/core/jackson-annotations/2.21/jackson-annotations-2.21.jar!/" />
+          <root url="jar://$USER_HOME$/.cache/latte/org/lattejava/jwt/0.1.0/jwt-0.1.0.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$USER_HOME$/.m2/repository/com/fasterxml/jackson/core/jackson-annotations/2.21/jackson-annotations-2.21-sources.jar!/" />
-        </SOURCES>
-      </library>
-    </orderEntry>
-    <orderEntry type="module-library">
-      <library>
-        <CLASSES>
-          <root url="jar://$USER_HOME$/.m2/repository/com/fasterxml/jackson/core/jackson-core/2.21.1/jackson-core-2.21.1.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES>
-          <root url="jar://$USER_HOME$/.m2/repository/com/fasterxml/jackson/core/jackson-core/2.21.1/jackson-core-2.21.1-sources.jar!/" />
+          <root url="jar://$USER_HOME$/.cache/latte/org/lattejava/jwt/0.1.0/jwt-0.1.0-src.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
@@ -117,22 +107,55 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$USER_HOME$/.cache/latte/org/lattejava/http/0.1.5/http-0.1.5.jar!/" />
+          <root url="jar://$USER_HOME$/.m2/repository/com/zaxxer/HikariCP/7.0.2/HikariCP-7.0.2.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$USER_HOME$/.cache/latte/org/lattejava/http/0.1.5/http-0.1.5-src.jar!/" />
+          <root url="jar://$USER_HOME$/.m2/repository/com/zaxxer/HikariCP/7.0.2/HikariCP-7.0.2-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$USER_HOME$/.cache/latte/org/lattejava/jwt/0.1.0/jwt-0.1.0.jar!/" />
+          <root url="jar://$USER_HOME$/.m2/repository/org/postgresql/postgresql/42.7.11/postgresql-42.7.11.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$USER_HOME$/.cache/latte/org/lattejava/jwt/0.1.0/jwt-0.1.0-src.jar!/" />
+          <root url="jar://$USER_HOME$/.m2/repository/org/postgresql/postgresql/42.7.11/postgresql-42.7.11-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="jar://$USER_HOME$/.m2/repository/org/jooq/jooq/3.21.4/jooq-3.21.4.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$USER_HOME$/.m2/repository/org/jooq/jooq/3.21.4/jooq-3.21.4-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="jar://$USER_HOME$/.m2/repository/io/r2dbc/r2dbc-spi/1.0.0.RELEASE/r2dbc-spi-1.0.0.RELEASE.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$USER_HOME$/.m2/repository/io/r2dbc/r2dbc-spi/1.0.0.RELEASE/r2dbc-spi-1.0.0.RELEASE-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="jar://$USER_HOME$/.m2/repository/org/reactivestreams/reactive-streams/1.0.4/reactive-streams-1.0.4.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$USER_HOME$/.m2/repository/org/reactivestreams/reactive-streams/1.0.4/reactive-streams-1.0.4-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
@@ -150,11 +173,11 @@
     <orderEntry type="module-library" scope="TEST">
       <library>
         <CLASSES>
-          <root url="jar://$USER_HOME$/.m2/repository/org/slf4j/slf4j-api/2.0.16/slf4j-api-2.0.16.jar!/" />
+          <root url="jar://$USER_HOME$/.m2/repository/org/slf4j/slf4j-api/2.0.17/slf4j-api-2.0.17.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$USER_HOME$/.m2/repository/org/slf4j/slf4j-api/2.0.16/slf4j-api-2.0.16-sources.jar!/" />
+          <root url="jar://$USER_HOME$/.m2/repository/org/slf4j/slf4j-api/2.0.17/slf4j-api-2.0.17-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
@@ -177,28 +200,6 @@
         <JAVADOC />
         <SOURCES>
           <root url="jar://$USER_HOME$/.m2/repository/org/webjars/jquery/3.7.1/jquery-3.7.1-sources.jar!/" />
-        </SOURCES>
-      </library>
-    </orderEntry>
-    <orderEntry type="module-library" scope="RUNTIME">
-      <library>
-        <CLASSES>
-          <root url="jar://$USER_HOME$/.m2/repository/com/inversoft/java-error/2.2.3/java-error-2.2.3.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES>
-          <root url="jar://$USER_HOME$/.m2/repository/com/inversoft/java-error/2.2.3/java-error-2.2.3-sources.jar!/" />
-        </SOURCES>
-      </library>
-    </orderEntry>
-    <orderEntry type="module-library" scope="RUNTIME">
-      <library>
-        <CLASSES>
-          <root url="jar://$USER_HOME$/.m2/repository/com/inversoft/jackson5/3.0.1/jackson5-3.0.1.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES>
-          <root url="jar://$USER_HOME$/.m2/repository/com/inversoft/jackson5/3.0.1/jackson5-3.0.1-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>

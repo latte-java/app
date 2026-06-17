@@ -19,7 +19,7 @@ content=@`
   @if(!errors.generalErrors.isEmpty())
     <div class="mb-4 p-4 border border-red-300 bg-red-50 dark:bg-red-950/40 rounded-lg text-sm text-red-700 dark:text-red-300">
       @for(Error err : errors.generalErrors)
-        <p class="m-0">${err.message}</p>
+        <p class="m-0">${err.message()}</p>
       @endfor
     </div>
   @endif
@@ -82,7 +82,7 @@ content=@`
   <form class="max-w-2xl" method="post" action="/app/groups/new">
     <h3 class="m-0 mb-3 text-base font-bold text-slate-900 dark:text-slate-100">Group ID</h3>
     !{List<Error> nameErrors = errors.fieldErrors.getOrDefault("name", java.util.List.of());}
-    !{String nameError = nameErrors.isEmpty() ? null : nameErrors.get(0).message;}
+    !{String nameError = nameErrors.isEmpty() ? null : nameErrors.get(0).message();}
     @template.components.input(name="name", value=name, placeholder="io.nimbusworks", monospace=true, hint="Reverse-DNS like com.acme or a short name like acme-tools. Lowercase letters, digits, and hyphens.", error=nameError)
     <div class="h-6"></div>
     <h3 class="m-0 mb-3 text-base font-bold text-slate-900 dark:text-slate-100">Description</h3>

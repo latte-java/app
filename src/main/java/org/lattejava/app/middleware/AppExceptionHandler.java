@@ -5,8 +5,10 @@
 package org.lattejava.app.middleware;
 
 import module java.base;
-import module org.lattejava.http;
 import module org.lattejava.web;
+
+import org.lattejava.app.service.*;
+import org.lattejava.fusionauth.*;
 
 /**
  * Catches exceptions thrown by downstream handlers on the browser-facing routes and renders the shared
@@ -19,12 +21,23 @@ import module org.lattejava.web;
  * @author Brian Pontarelli
  */
 public class AppExceptionHandler extends ExceptionHandler {
+  private static final System.Logger LOG = System.getLogger(AppExceptionHandler.class.getName());
+
   public AppExceptionHandler(JTETemplates templates) {
-    super(Map.of(Exception.class, htmlRenderer(templates)));
+    super(
+        Map.of(
+            Exception.class, htmlRenderer(templates)
+        )
+    );
   }
 
   private static ErrorRenderer htmlRenderer(JTETemplates templates) {
     return (req, res, e) -> {
+      LOG.log(System.Logger.Level.WARNING, "Encountered an uncaught exception [" + e + "]");
+      if (e instanceof FusionAuthException fae) {
+        LOG.log(System.Logger.Level.WARNING, "FusionAuth errors were [" + fae.errors.toJSON() + "]");
+      }
+
       int status = (e instanceof HTTPException he) ? he.status() : 500;
       res.setStatus(status);
       templates.html("pages/error.jte", req, res, Map.of("status", status));

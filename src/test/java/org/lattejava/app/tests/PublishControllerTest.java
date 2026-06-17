@@ -118,7 +118,7 @@ public class PublishControllerTest extends BaseTest {
   @Test
   public void publish_malformedJSON_returns400() throws Exception {
     var string = new StringBodyAsserter();
-    // Malformed JSON is a BadRequestException from JSONBodySupplier, rendered by web's default JSON renderer
+    // Malformed JSON is a BadRequestException from the route's BodySupplier, rendered by web's default JSON renderer
     // (not the full Errors object the ValidationException renderer writes).
     publish("org.lattejava", "not json at all")
         .assertStatus(400)
