@@ -34,7 +34,7 @@ public abstract class BaseTest {
 
   @BeforeSuite
   public static void beforeSuite() throws Exception {
-    main = new Main(8081, true);
+    main = new Main(8081, 8444, true);
     main.main();
     db = Services.databaseService();
     oidc = new OIDCTestFixture(test, main.ssrConfig);
@@ -43,7 +43,7 @@ public abstract class BaseTest {
     // Discover the FA test user UUID once; the per-method reset re-seeds the OWNER membership with it.
     FusionAuthClient fa = new FusionAuthClient(
         main.config.get("fusionauth.apiKey"),
-        main.config.get("fusionauth.baseUrl")
+        main.config.get("fusionauth.baseURL")
     );
     var userResponse = fa.retrieveUser(null, null, null, null, "test@lattejava.org", null, null);
     if (userResponse == null || userResponse.user() == null) {

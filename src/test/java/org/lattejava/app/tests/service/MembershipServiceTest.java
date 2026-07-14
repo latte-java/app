@@ -205,7 +205,7 @@ public class MembershipServiceTest extends BaseTest {
 
   @Test
   public void listMembersEnrichesUserFromFusionAuth() {
-    FusionAuthClient fa = new FusionAuthClient(main.config.get("fusionauth.apiKey"), main.config.get("fusionauth.baseUrl"));
+    FusionAuthClient fa = new FusionAuthClient(main.config.get("fusionauth.apiKey"), main.config.get("fusionauth.baseURL"));
     UUID testUserId = fa.retrieveUser(null, null, null, null, "test@lattejava.org", null, null).user().id();
 
     databaseService.deleteGroup("test.enrich.fixture"); // cascades to members

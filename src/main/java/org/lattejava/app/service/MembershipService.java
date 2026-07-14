@@ -33,7 +33,7 @@ public class MembershipService {
     this.databaseService = databaseService;
     this.fusionAuth = new FusionAuthClient(
         config.get("fusionauth.apiKey"),
-        config.get("fusionauth.baseUrl")
+        config.get("fusionauth.baseURL")
     );
     this.validator = new MembershipValidator(databaseService);
   }

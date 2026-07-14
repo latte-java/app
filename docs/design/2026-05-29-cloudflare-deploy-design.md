@@ -120,7 +120,7 @@ response. No application logic moves into JavaScript.
      `org.lattejava` group); feed its REST credentials to the container config.
    - **Prod R2 bucket** — create; set prod `s3.*` (R2 endpoint, `region=auto`, bucket, keys).
    - **Prod FusionAuth wiring** — register `https://app.lattejava.org` authorized redirect +
-     logout URLs on the FA application; point `fusionauth.issuer/baseUrl/clientId/clientSecret`
+     logout URLs on the FA application; point `fusionauth.issuer/baseURL/clientId/clientSecret`
      (and the CLI client id/secret) at prod FA.
    - **Prod GitHub OAuth app** — homepage `https://app.lattejava.org`, callback at prod FA's
      `/oauth2/callback`; set `github.clientId` / `github.clientSecret`.

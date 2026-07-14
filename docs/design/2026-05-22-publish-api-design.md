@@ -162,10 +162,10 @@ token to a `JWT` against JWKS, and binds it for the request. This app writes non
 set it explicitly:
 
 ```java
-.introspectionEndpoint(URI.create(config.get("fusionauth.baseUrl") + "/oauth2/introspect"))
+.introspectionEndpoint(URI.create(config.get("fusionauth.baseURL") + "/oauth2/introspect"))
 ```
 
-(`fusionauth.baseUrl` is already a required config key; in dev it is `http://localhost:9013`, giving
+(`fusionauth.baseURL` is already a required config key; in dev it is `http://localhost:9013`, giving
 `http://localhost:9013/oauth2/introspect`. `OIDCConfig.build()` runs `requireSecureURI` on the
 introspection endpoint, which already permits the localhost-http endpoints discovered today.) Without
 this, `apiAuthenticated()` throws at construction.

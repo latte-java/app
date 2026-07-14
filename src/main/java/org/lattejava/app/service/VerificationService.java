@@ -45,7 +45,7 @@ public class VerificationService {
     this.dnsResolver = dnsResolver;
     this.fusionAuth = new FusionAuthClient(
         config.get("fusionauth.apiKey"),
-        config.get("fusionauth.baseUrl")
+        config.get("fusionauth.baseURL")
     );
     this.githubClient = githubClient;
     this.githubClientId = config.get("github.clientId");

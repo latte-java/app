@@ -17,7 +17,7 @@ public class Main {
   public static final Path BASE_DIR = Path.of("web");
   public static final List<String> REQUIRED_CONFIG = List.of(
       "db.password", "db.url", "db.username",
-      "fusionauth.apiKey", "fusionauth.baseUrl", "fusionauth.cliClientId", "fusionauth.cliClientSecret", "fusionauth.clientId", "fusionauth.clientSecret", "fusionauth.issuer",
+      "fusionauth.apiKey", "fusionauth.baseURL", "fusionauth.cliClientId", "fusionauth.cliClientSecret", "fusionauth.clientId", "fusionauth.clientSecret", "fusionauth.issuer",
       "github.clientId", "github.clientSecret",
       "s3.accessKeyId", "s3.bucket", "s3.endpoint", "s3.region", "s3.secretAccessKey",
       "web.cookieEncryptionKey"
@@ -26,6 +26,7 @@ public class Main {
   public final Configuration config;
   public final Cookies cookies;
   public final int port;
+  public final int tlsPort;
   public final OIDCConfig ssrConfig;
   public final BrowserSettings ssrSettings;
   public final JTETemplates templates;
@@ -34,10 +35,10 @@ public class Main {
   private final OIDC<User> ssrOIDC;
 
   public Main() {
-    this(8080, false);
+    this(8080, 8443, false);
   }
 
-  public Main(int port, boolean test) {
+  public Main(int port, int tlsPort, boolean test) {
     this.config = new Configuration(
         REQUIRED_CONFIG,
         Path.of(System.getProperty("user.home"), ".config", "latte", "app", "config.properties"),
@@ -50,7 +51,7 @@ public class Main {
                                .issuer(config.get("fusionauth.issuer"))
                                .clientId(config.get("fusionauth.clientId"))
                                .clientSecret(config.get("fusionauth.clientSecret"))
-                               .introspectionEndpoint(URI.create(config.get("fusionauth.baseUrl") + "/oauth2/introspect"))
+                               .introspectionEndpoint(URI.create(config.get("fusionauth.baseURL") + "/oauth2/introspect"))
                                .build();
     this.ssrSettings = BrowserSettings.builder()
                                       .postLoginPage("/app/")
@@ -62,13 +63,14 @@ public class Main {
                                .issuer(config.get("fusionauth.issuer"))
                                .clientId(config.get("fusionauth.cliClientId"))
                                .clientSecret(config.get("fusionauth.cliClientSecret"))
-                               .introspectionEndpoint(URI.create(config.get("fusionauth.baseUrl") + "/oauth2/introspect"))
+                               .introspectionEndpoint(URI.create(config.get("fusionauth.baseURL") + "/oauth2/introspect"))
                                .build();
     this.apiOIDC = OIDC.api(apiConfig, UserService::toUser);
 
     this.cookies = Cookies.encryptionKeys(Base64.getDecoder().decode(config.get("web.cookieEncryptionKey")));
     this.templates = new JTETemplates(BASE_DIR);
     this.port = port;
+    this.tlsPort = tlsPort;
     this.web = new Web();
   }
 
@@ -85,13 +87,13 @@ public class Main {
     HTTPListenerConfiguration[] listeners;
     if (Files.isRegularFile(tlsPrivateKey) && Files.isRegularFile(tlsCertificate)) {
       listeners = new HTTPListenerConfiguration[]{
-          new HTTPListenerConfiguration(8080),
-          new HTTPListenerConfiguration(InetAddress.getByName("app.local.lattejava.org"), 8443,
+          new HTTPListenerConfiguration(port),
+          new HTTPListenerConfiguration(InetAddress.getByName("app.local.lattejava.org"), tlsPort,
               Files.readString(tlsCertificate), Files.readString(tlsPrivateKey))
       };
     } else {
       listeners = new HTTPListenerConfiguration[]{
-          new HTTPListenerConfiguration(8080),
+          new HTTPListenerConfiguration(port),
       };
     }
 

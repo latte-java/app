@@ -19,7 +19,7 @@ public class ViewService {
     this.groupService = Services.groupService();
     this.membershipService = Services.membershipService();
 
-    String base = config.get("fusionauth.baseUrl");
+    String base = config.get("fusionauth.baseURL");
     if (base.endsWith("/")) {
       base = base.substring(0, base.length() - 1);
     }
