@@ -122,7 +122,7 @@
       "url": "/api/tenant/#{defaultTenantId}",
       "body": {
         "tenant": {
-          "issuer": "http://localhost:9013",
+          "issuer": "https://auth.local.lattejava.org:9413",
           "themeId": "#{themeId}",
           "emailConfiguration": {
             "host": "mailcatcher",
@@ -269,9 +269,11 @@
               "http://localhost:8080/oidc/logout-return",
               "http://localhost:8080/oidc/return",
               "http://localhost:8081/oidc/logout-return",
-              "http://localhost:8081/oidc/return"
+              "http://localhost:8081/oidc/return",
+              "https://app.local.lattejava.org:8443/oidc/logout-return",
+              "https://app.local.lattejava.org:8443/oidc/return"
             ],
-            "logoutURL": "http://localhost:8080/oidc/logout-return",
+            "logoutURL": "https://app.local.lattejava.org:8443/oidc/logout-return",
             "clientSecret": "#{clientSecret}",
             "enabledGrants": [
               "authorization_code",

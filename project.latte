@@ -2,7 +2,7 @@
  * Copyright (c) 2026 The Latte Project
  * SPDX-License-Identifier: MIT
  */
-project(group: "org.lattejava", name: "app", version: "0.2.0", licenses: ["MIT"]) {
+project(group: "org.lattejava", name: "app", version: "0.3.0", licenses: ["MIT"]) {
   workflow {
     standard()
 
@@ -26,9 +26,9 @@ project(group: "org.lattejava", name: "app", version: "0.2.0", licenses: ["MIT"]
       dependency(id: "gg.jte:jte:3.2.1")
       dependency(id: "gg.jte:jte-runtime:3.2.1")
       dependency(id: "org.lattejava:fusionauth:0.4.0")
-      dependency(id: "org.lattejava:http:0.1.5")
-      dependency(id: "org.lattejava:jwt:0.1.0")
-      dependency(id: "org.lattejava:web:0.4.0")
+      dependency(id: "org.lattejava:http:0.3.0")
+      dependency(id: "org.lattejava:jwt:0.2.0")
+      dependency(id: "org.lattejava:web:0.6.0")
       dependency(id: "org.jooq:jooq:3.21.4")
       // jOOQ's module-info `requires static` these, so javac needs them on the compile module-path (verified:
       // moving them to a runtime group fails compilation). They are not transitively resolved (optional in

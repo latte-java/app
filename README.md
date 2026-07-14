@@ -32,10 +32,43 @@ latte minio      # start a local MinIO container for S3 tests
 latte tailwind   # rebuild CSS from src/main/css/app.css on template changes
 ```
 
-Running and testing need some local services and per-developer config (FusionAuth on `:9013`, a
-local PostgreSQL, an S3 store, and a `~/.config/latte/app/config.properties`). The full,
-step-by-step setup — FusionAuth kickstart, Postgres + jOOQ codegen, R2/MinIO, and GitHub OAuth — lives in
-[`CLAUDE.md`](CLAUDE.md).
+## Running locally
+
+In order to run this application on your local machine, you need to install a couple of things and configure your machine for TLS. Follow these steps to accomplish all of that:
+
+First, edit your `/etc/hosts` file and ensure it has these entries:
+
+```text
+127.0.0.1       localhost app.local.lattejava.org auth.local.lattejava.org
+```
+
+Next, install the necessary software:
+
+* PostgreSQL
+
+Follow these steps to set up certificates for FusionAuth and the app itself:
+
+1. Install `mkcert` and install the CA using `mkcert -install`
+2. `mkdir keys` to create the keys directory
+3. `cd keys`
+4. `mkcert app.local.lattejava.org`
+5. `cd ../src/main/fusionauth`
+6. `mkdir certs`
+7. `cd certs`
+8. `mkcert auth.local.lattejava.org`
+9. `cd ..`
+10. `cp .env.template .env`
+11. `docker compose --profile mailcatcher up -d`
+
+Start the S3 Docker container MinIO for testing by running this command from the root of the project:
+
+`latte minio`
+
+And then you can start the application like this:
+
+`latte clean run`
+
+The application should now be available at https://app.local.lattejava.org:8443.
 
 ## Project layout
 

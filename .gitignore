@@ -1,4 +1,5 @@
 build
+keys
 node_modules
 .wrangler
 .dev.vars

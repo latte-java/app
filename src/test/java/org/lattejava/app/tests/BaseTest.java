@@ -33,7 +33,7 @@ public abstract class BaseTest {
   }
 
   @BeforeSuite
-  public static void beforeSuite() {
+  public static void beforeSuite() throws Exception {
     main = new Main(8081, true);
     main.main();
     db = Services.databaseService();

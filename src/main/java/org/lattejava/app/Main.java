@@ -76,8 +76,24 @@ public class Main {
     web.close();
   }
 
-  public void main() {
+  public void main() throws Exception {
     Services.initialize(config);
+
+    // Construct the listeners based on if the local TLS files exist
+    var tlsPrivateKey = Path.of("keys/app.local.lattejava.org-key.pem");
+    var tlsCertificate = Path.of("keys/app.local.lattejava.org.pem");
+    HTTPListenerConfiguration[] listeners;
+    if (Files.isRegularFile(tlsPrivateKey) && Files.isRegularFile(tlsCertificate)) {
+      listeners = new HTTPListenerConfiguration[]{
+          new HTTPListenerConfiguration(8080),
+          new HTTPListenerConfiguration(InetAddress.getByName("app.local.lattejava.org"), 8443,
+              Files.readString(tlsCertificate), Files.readString(tlsPrivateKey))
+      };
+    } else {
+      listeners = new HTTPListenerConfiguration[]{
+          new HTTPListenerConfiguration(8080),
+      };
+    }
 
     web.addShutdownTask(Services::shutdown)
        .baseDir(BASE_DIR)
@@ -165,7 +181,7 @@ public class Main {
             });
        })
        .missingHandler(this::missing)
-       .start(port);
+       .start(listeners);
   }
 
   private void dashboard(HTTPRequest req, HTTPResponse res) throws IOException {
