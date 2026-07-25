@@ -7,6 +7,7 @@ package org.lattejava.app.db.jooq;
 import org.lattejava.app.db.jooq.tables.GroupVerifications;
 import org.lattejava.app.db.jooq.tables.Groups;
 import org.lattejava.app.db.jooq.tables.Members;
+import org.lattejava.app.db.jooq.tables.Versions;
 
 
 /**
@@ -29,4 +30,9 @@ public class Tables {
      * The table <code>public.members</code>.
      */
     public static final Members MEMBERS = Members.MEMBERS;
+
+    /**
+     * The table <code>public.versions</code>.
+     */
+    public static final Versions VERSIONS = Versions.VERSIONS;
 }

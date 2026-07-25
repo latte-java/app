@@ -41,6 +41,17 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
+          <root url="jar://$USER_HOME$/.cache/latte/org/lattejava/database/0.1.0/database-0.1.0.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$USER_HOME$/.cache/latte/org/lattejava/database/0.1.0/database-0.1.0-src.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
           <root url="jar://$USER_HOME$/.cache/latte/org/lattejava/fusionauth/0.4.0/fusionauth-0.4.0.jar!/" />
         </CLASSES>
         <JAVADOC />

@@ -14,6 +14,7 @@ import org.jooq.impl.SchemaImpl;
 import org.lattejava.app.db.jooq.tables.GroupVerifications;
 import org.lattejava.app.db.jooq.tables.Groups;
 import org.lattejava.app.db.jooq.tables.Members;
+import org.lattejava.app.db.jooq.tables.Versions;
 
 
 /**
@@ -45,6 +46,11 @@ public class Public extends SchemaImpl {
     public final Members MEMBERS = Members.MEMBERS;
 
     /**
+     * The table <code>public.versions</code>.
+     */
+    public final Versions VERSIONS = Versions.VERSIONS;
+
+    /**
      * No further instances allowed
      */
     private Public() {
@@ -62,7 +68,8 @@ public class Public extends SchemaImpl {
         return Arrays.asList(
             GroupVerifications.GROUP_VERIFICATIONS,
             Groups.GROUPS,
-            Members.MEMBERS
+            Members.MEMBERS,
+            Versions.VERSIONS
         );
     }
 }

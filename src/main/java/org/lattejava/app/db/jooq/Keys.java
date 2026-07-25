@@ -13,9 +13,11 @@ import org.jooq.impl.QOM.ForeignKeyRule;
 import org.lattejava.app.db.jooq.tables.GroupVerifications;
 import org.lattejava.app.db.jooq.tables.Groups;
 import org.lattejava.app.db.jooq.tables.Members;
+import org.lattejava.app.db.jooq.tables.Versions;
 import org.lattejava.app.db.jooq.tables.records.GroupVerificationsRecord;
 import org.lattejava.app.db.jooq.tables.records.GroupsRecord;
 import org.lattejava.app.db.jooq.tables.records.MembersRecord;
+import org.lattejava.app.db.jooq.tables.records.VersionsRecord;
 
 
 /**
@@ -32,6 +34,7 @@ public class Keys {
     public static final UniqueKey<GroupVerificationsRecord> GROUP_VERIFICATIONS_PKEY = Internal.createUniqueKey(GroupVerifications.GROUP_VERIFICATIONS, DSL.name("group_verifications_pkey"), new TableField[] { GroupVerifications.GROUP_VERIFICATIONS.GROUP_NAME }, true);
     public static final UniqueKey<GroupsRecord> GROUPS_PKEY = Internal.createUniqueKey(Groups.GROUPS, DSL.name("groups_pkey"), new TableField[] { Groups.GROUPS.NAME }, true);
     public static final UniqueKey<MembersRecord> MEMBERS_PKEY = Internal.createUniqueKey(Members.MEMBERS, DSL.name("members_pkey"), new TableField[] { Members.MEMBERS.GROUP_NAME, Members.MEMBERS.USER_ID }, true);
+    public static final UniqueKey<VersionsRecord> VERSIONS_PKEY = Internal.createUniqueKey(Versions.VERSIONS, DSL.name("versions_pkey"), new TableField[] { Versions.VERSIONS.VERSION }, true);
 
     // -------------------------------------------------------------------------
     // FOREIGN KEY definitions

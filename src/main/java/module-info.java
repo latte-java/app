@@ -9,6 +9,7 @@ module org.lattejava.app {
   requires java.naming;
   requires java.net.http;
   requires org.jooq;
+  requires org.lattejava.database;
   requires org.lattejava.fusionauth;
   requires org.lattejava.http;
   requires org.lattejava.jwt;

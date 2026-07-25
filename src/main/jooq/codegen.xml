@@ -14,7 +14,7 @@
 <configuration xmlns="http://www.jooq.org/xsd/jooq-codegen-3.0.0.xsd">
   <jdbc>
     <driver>org.postgresql.Driver</driver>
-    <url>jdbc:postgresql://127.0.0.1:5432/app</url>
+    <url>jdbc:postgresql://127.0.0.1:5432/app_schema</url>
     <user>dev</user>
     <password>dev</password>
   </jdbc>

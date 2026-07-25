@@ -24,12 +24,13 @@ modules, and integrating with the `cli`.
 ## Quick start
 
 ```bash
-latte build      # compile + jar
-latte run        # run the server on http://localhost:8080  (main: org.lattejava.app.Main)
-latte test       # run the test suite (depends on build)
-latte database   # create/recreate the local Postgres app/app_test databases + load schema
-latte minio      # start a local MinIO container for S3 tests
-latte tailwind   # rebuild CSS from src/main/css/app.css on template changes
+latte build         # compile + jar
+latte run           # run the server on http://localhost:8080  (main: org.lattejava.app.Main)
+latte test          # run the test suite (depends on build)
+latte main-database # create/recreate the local Postgres app databases (empty; the app migrates on startup)
+latte test-database # create/recreate the local Postgres app_test databases (empty; the app migrates on startup)
+latte minio         # start a local MinIO container for S3 tests
+latte tailwind      # rebuild CSS from src/main/css/app.css on template changes
 ```
 
 ## Running locally
@@ -83,7 +84,8 @@ src/main/java/org/lattejava/app/
   middleware/   exception handlers (HTML for the UI, JSON for the API)
 web/            JTE templates, components, and static assets
 src/main/fusionauth/   FusionAuth docker-compose + kickstart
-src/main/sql/   PostgreSQL schema.sql + seed.sql (source of truth for jOOQ codegen)
+src/main/resources/db/   SQL migrations (<semver>.sql), applied by the app on startup
+src/main/sql/   one-off scripts (versions-table bootstrap for pre-migration databases)
 docs/           design specs (docs/design) and implementation plans (docs/implementation)
 ```
 

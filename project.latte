@@ -25,6 +25,7 @@ project(group: "org.lattejava", name: "app", version: "0.3.0", licenses: ["MIT"]
     group(name: "compile") {
       dependency(id: "gg.jte:jte:3.2.1")
       dependency(id: "gg.jte:jte-runtime:3.2.1")
+      dependency(id: "org.lattejava:database:0.1.0")
       dependency(id: "org.lattejava:fusionauth:0.4.0")
       dependency(id: "org.lattejava:http:0.3.0")
       dependency(id: "org.lattejava:jwt:0.2.0")
@@ -64,7 +65,7 @@ project(group: "org.lattejava", name: "app", version: "0.3.0", licenses: ["MIT"]
 }
 
 // Plugins
-database = loadPlugin(id: "org.lattejava.plugin:database:0.4.0")
+database = loadPlugin(id: "org.lattejava.plugin:database:0.5.0-{integration}")
 dependency = loadPlugin(id: "org.lattejava.plugin:dependency:0.4.0")
 file = loadPlugin(id: "org.lattejava.plugin:file:0.4.3")
 idea = loadPlugin(id: "org.lattejava.plugin:idea:0.4.1")
@@ -81,7 +82,7 @@ target(name: "clean", description: "Cleans the project") {
   java.clean()
 }
 
-target(name: "build", description: "Compiles the project, JARs it, and compiles the Tailwind CSS") {
+target(name: "build", description: "Compiles the project, JARs it, and compiles the Tailwind CSS", dependsOn: ["codegen"]) {
   file.execute(cmd: "git config core.hooksPath .githooks")
 
   java.compile()
@@ -103,24 +104,21 @@ target(name: "run", description: "Runs the web server", dependsOn: ["build"]) {
   java.run(main: "org.lattejava.app.Main")
 }
 
-target(name: "main-database", description: "Creates/recreates the main databases and loads the schema.") {
+target(name: "main-database", description: "Creates/recreates the main databases. The app applies the SQL migrations on startup.") {
   database.createMainDatabase()
-  database.execute(file: "src/main/sql/schema.sql")
-  database.execute(file: "src/main/sql/seed.sql")
 }
 
-target(name: "test-database", description: "Creates/recreates the test databases and loads the schema.") {
+target(name: "test-database", description: "Creates/recreates the test databases. The app applies the SQL migrations on startup.") {
   database.createTestDatabase()
-  database.execute(file: "src/main/sql/schema.sql")
 }
 
-target(name: "codegen", description: "Generates the jOOQ classes from the live `app` database (run `database --type=main` first)", dependsOn: ["main-database"]) {
-  // jOOQ's standalone GenerationTool introspects the live `app` database and writes sources into
-  // src/main/java/org/lattejava/app/db/jooq (configured in src/main/jooq/codegen.xml). It runs off the
-  // build-only `codegen` dependency group (the tool + driver), never the app's compile/runtime path.
-  // jOOQ runs on the module path here. Its `requires static` optionals (JAXB for config parsing,
-  // r2dbc/reactive-streams for the converter context) aren't auto-resolved, so add them; and its config
-  // unmarshaller reflects from org.jooq into org.jooq.meta.jaxb, which needs an explicit opens.
+target(name: "codegen", description: "Generates the jOOQ classes from the live `app` database") {
+  // Create the schema in a separate database that jOOQ can use to generate the code without disrupting the main or test databases
+  database.settings.name = "app_schema"
+  database.createDatabase()
+  database.migrate()
+
+  // Run jOOQ's codegen against the app_schema DB. Classpath is the specific group named `codegen` to prevent module issues
   java.run(
       main: "org.jooq.codegen.GenerationTool",
       arguments: "src/main/jooq/codegen.xml",

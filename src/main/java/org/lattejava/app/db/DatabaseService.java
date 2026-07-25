@@ -6,6 +6,10 @@ package org.lattejava.app.db;
 
 import module java.base;
 import module org.lattejava.app;
+import module org.lattejava.database;
+
+import java.sql.Connection;
+import java.sql.SQLException;
 
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
@@ -26,14 +30,16 @@ import static org.lattejava.app.db.jooq.Tables.MEMBERS;
 
 /**
  * PostgreSQL-backed data access, implemented with jOOQ over a HikariCP connection pool. This service owns the
- * persistence setup entirely — it builds the {@link DataSource} and {@link DSLContext} from {@code db.*} config — so
- * the rest of the application never touches connections or the persistence technology directly.
+ * persistence setup entirely — it builds the {@link DataSource} and {@link DSLContext} from {@code db.*} config and
+ * applies any pending SQL migrations (classpath {@code db/*.sql}) at construction time — so the rest of the
+ * application never touches connections or the persistence technology directly.
  *
  * <p>Enum columns ({@code state}, {@code role}) and the epoch-millis BIGINT timestamp columns are mapped to the Java
  * enums and {@link Instant} by jOOQ forced-type converters generated into the {@code org.lattejava.app.db.jooq}
  * package, so the typed fields used below carry the domain types directly.
  */
 public class DatabaseService {
+  private static final System.Logger LOG = System.getLogger(DatabaseService.class.getName());
   private final HikariDataSource dataSource;
   private final DSLContext dsl;
 
@@ -46,6 +52,17 @@ public class DatabaseService {
     // Pool sizing and liveness tuning (maxLifetime/keepalive) for PlanetScale are intentionally left at
     // HikariCP defaults until observed concurrency justifies specific values — see the migration design doc.
     this.dataSource = new HikariDataSource(hikariConfig);
+
+    // Apply any pending SQL migrations (classpath db/*.sql) before anything else touches the schema
+    try (Connection connection = dataSource.getConnection()) {
+      var applied = new Migrator(connection, "db").migrate();
+      if (!applied.isEmpty()) {
+        LOG.log(System.Logger.Level.INFO, "Applied database migrations " + applied);
+      }
+    } catch (MigrationException | SQLException e) {
+      throw new IllegalStateException("Unable to migrate the database", e);
+    }
+
     this.dsl = DSL.using(dataSource, SQLDialect.POSTGRES);
   }
 

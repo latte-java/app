@@ -19,19 +19,19 @@ Worktrees should be created in the `.worktrees` directory in the root of the pro
 
 This project is built with `latte` (the Latte build tool, project file is `project.latte`), not Maven/Gradle. Java 25 is required (`.javaversion`).
 
-| Task                      | Command                                                                                                       |
-|---------------------------|---------------------------------------------------------------------------------------------------------------|
-| Compile + jar             | `latte build`                                                                                                 |
-| Run tests                 | `latte test` (depends on `build`)                                                                             |
-| Run a single test         | `latte test --test=org.lattejava.app.tests.MainTest`                                                          |
-| Run the web server        | `latte run` (boots on `localhost:8080`, main class `org.lattejava.app.Main`)                                  |
-| Create/recreate DBs       | `latte database --type=main,test` (drops + recreates `app`/`app_test` on local Postgres and loads `src/main/sql/schema.sql`; `--type` defaults to both) |
-| Regenerate jOOQ classes   | `latte codegen` (introspects the live `app` DB and regenerates `src/main/java/org/lattejava/app/db/jooq`; run after schema changes) |
-| Tailwind watch            | `latte tailwind` (rebuilds `web/static/css/app.css` from `src/main/css/app.css` on changes to `web/**/*.jte`) |
-| Start MinIO (test S3)     | `latte minio` (runs a local MinIO container on `:9000` and creates the `latte-test` bucket; needed for tests) |
-| Local integration release | `latte int` (publishes to local integration repo)                                                             |
-| Refresh IntelliJ module   | `latte idea`                                                                                                  |
-| Clean                     | `latte clean`                                                                                                 |
+| Task                      | Command                                                                                                                                                                                      |
+|---------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Compile + jar             | `latte build`                                                                                                                                                                                |
+| Run tests                 | `latte test` (depends on `build`)                                                                                                                                                            |
+| Run a single test         | `latte test --test=org.lattejava.app.tests.MainTest`                                                                                                                                         |
+| Run the web server        | `latte run` (boots on `localhost:8080`, main class `org.lattejava.app.Main`)                                                                                                                 |
+| Create/recreate DBs       | `latte database --type=main,test` (drops + recreates `app`/`app_test` empty on local Postgres; the app applies the `src/main/resources/db` migrations on startup; `--type` defaults to both) |
+| Regenerate jOOQ classes   | `latte codegen` (recreates `app`, applies the migrations, and regenerates `src/main/java/org/lattejava/app/db/jooq`; run after adding a migration)                                           |
+| Tailwind watch            | `latte tailwind` (rebuilds `web/static/css/app.css` from `src/main/css/app.css` on changes to `web/**/*.jte`)                                                                                |
+| Start MinIO (test S3)     | `latte minio` (runs a local MinIO container on `:9000` and creates the `latte-test` bucket; needed for tests)                                                                                |
+| Local integration release | `latte int` (publishes to local integration repo)                                                                                                                                            |
+| Refresh IntelliJ module   | `latte idea`                                                                                                                                                                                 |
+| Clean                     | `latte clean`                                                                                                                                                                                |
 
 Tests require FusionAuth running locally on `:9013` with the kickstart applied. Start it with Docker Compose from `src/main/fusionauth/`, using the `mailcatcher` profile:
 
@@ -58,7 +58,7 @@ GitHub-email caveat: `LinkByEmail` resolves an existing FA user by the email ret
 
 The data layer is PostgreSQL accessed through [jOOQ](https://www.jooq.org/) over a HikariCP pool. Dev and tests run against a **local PostgreSQL** (no Cloudflare account needed); production points at **PlanetScale (Postgres)** while the app still deploys on a Cloudflare container. Data access lives in `org.lattejava.app.db.DatabaseService`, which owns the `DataSource` + jOOQ `DSLContext`; `Main` does no database work.
 
-Schema is plain SQL — `src/main/sql/schema.sql` (tables) and `src/main/sql/seed.sql` (the reserved `org.lattejava` group). It is the single source of truth: the `database` target loads it, and `codegen` introspects the resulting DB. There is **no migration tool yet** (epoch-millis timestamps are `BIGINT`; enums are `TEXT` + `CHECK`, mapped to the Java enums and `Instant` by jOOQ forced-type converters).
+Schema is plain SQL, managed as **classpath migrations** — `src/main/resources/db/<semver>.sql` (e.g. `0.1.0.sql` tables and the reserved `org.lattejava` seed group), applied in SemVer order by `org.lattejava.database`'s `Migrator` when `DatabaseService` is constructed at startup. Each applied file is recorded in the `versions` table with its SHA-256 checksum, so **never edit an applied migration** (even reformatting fails the checksum verification on the next start) — add a new, higher-versioned file instead. The migrations are the single source of truth: the `database` targets only create empty databases, and `codegen` applies the migrations before introspecting. (Epoch-millis timestamps are `BIGINT`; enums are `TEXT` + `CHECK`, mapped to the Java enums and `Instant` by jOOQ forced-type converters.)
 
 ### One-time setup
 
@@ -70,23 +70,13 @@ Schema is plain SQL — `src/main/sql/schema.sql` (tables) and `src/main/sql/see
    db.username=dev
    db.password=dev
    ```
-3. Create the databases and load the schema:
-
-   ```
-   latte database --type=main,test
-   ```
-
-   This drops + recreates `app` (dev) and `app_test` (tests), creates/grants the `dev` role, and loads `schema.sql` (plus `seed.sql` into `app`). Re-run after editing `schema.sql`.
-4. After any schema change, regenerate the committed jOOQ classes: `latte codegen` (introspects the live `app` DB).
-
-   **Note on test config:** the committed `src/test/resources/config.properties` points `db.*` at `app_test`. The per-developer `~/.config` config takes precedence, so a `db.url` there (pointing at `app`) overrides it — and the per-method test reset wipes whatever DB it connects to. Keep your personal `db.url` on `app`, run tests with that in place only if you accept they hit `app_test` via the committed config, or omit `db.*` from personal config when running the suite. (Same precedence caveat as `s3.*`.)
 
 ### Tests + PostgreSQL
 
 `latte test` requires:
 
 - FusionAuth running locally on `:9013` (existing requirement).
-- A local PostgreSQL with `app_test` provisioned (`latte database --type=test`).
+- A local PostgreSQL with the `dev` role (`latte database --type=test`; the `test` target recreates `app_test` itself and the booting app applies the migrations).
 
 `BaseTest` resets state with an `@BeforeMethod` that deletes all rows (members, group_verifications, groups — child tables first) and re-seeds the `org.lattejava` group + an `OWNER` membership for the FA test user before **every** test method.
 
